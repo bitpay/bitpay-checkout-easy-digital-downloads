@@ -74,6 +74,10 @@ function bitpay_edd_ipn(WP_REST_Request $request){
 
         $sql = "UPDATE ".$table_name." SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
         $wpdb->get_results($sql);
+
+        #update the order status
+        $sql = "UPDATE ".$wpdb->posts." SET post_status = 'publish' WHERE ID = $order_id";
+        $wpdb->get_results($sql);
    
         break;
 
@@ -87,6 +91,10 @@ function bitpay_edd_ipn(WP_REST_Request $request){
 
         $sql = "UPDATE ".$table_name." SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
         $wpdb->get_results($sql);
+
+         #update the order status
+         $sql = "UPDATE ".$wpdb->posts." SET post_status = 'processing' WHERE ID = $order_id";
+         $wpdb->get_results($sql);
            
         break;
 
@@ -100,6 +108,10 @@ function bitpay_edd_ipn(WP_REST_Request $request){
 
         $sql = "UPDATE ".$table_name." SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
         $wpdb->get_results($sql);
+
+         #update the order status
+         $sql = "UPDATE ".$wpdb->posts." SET post_status = 'failed' WHERE ID = $order_id";
+         $wpdb->get_results($sql);
            
         break;
 
@@ -126,6 +138,10 @@ function bitpay_edd_ipn(WP_REST_Request $request){
 
         $sql = "UPDATE ".$table_name." SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
         $wpdb->get_results($sql);
+
+         #update the order status
+         $sql = "UPDATE ".$wpdb->posts." SET post_status = 'refunded' WHERE ID = $order_id";
+         $wpdb->get_results($sql);
         break;
     }
 }
