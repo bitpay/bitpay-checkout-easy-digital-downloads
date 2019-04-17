@@ -128,10 +128,6 @@ function bitpay_edd_ipn(WP_REST_Request $request){
         $wpdb->get_results($sql);
         break;
     }
-
-
-
-
 }
 //delete the order because they closed the modal
 function bitpay_edd_cart_fix(WP_REST_Request $request)
@@ -226,6 +222,11 @@ function bp_checkout_edd_register_gateway_section($gateway_sections)
 add_filter('edd_settings_sections_gateways', 'bp_checkout_edd_register_gateway_section');
 
 
+function pw_edd_payment_icon($icons) {
+    $icons[ plugins_url('/bitpaycheckout.png', __FILE__)] = 'BitPay Checkout';
+    return $icons;
+}
+add_filter('edd_accepted_payment_icons', 'pw_edd_payment_icon');
 # adds the settings to the Payment Gateways section
 function pw_edd_add_settings($gateway_settings) {
 	$bp_checkout_edd_settings = array(
@@ -340,7 +341,7 @@ function bpcedd_addOrderNote($order_id,$invoice_id,$status){
     switch($status){
         case 'processing':
         default:
-        $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'],$invoice_id) . '">' . $invoice_id . '</a> is processing.';
+        $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'],$invoice_id) . '">' . $invoice_id . '</a> is pending.';
         break;
     }
 
@@ -356,7 +357,7 @@ function bpcedd_addOrderNote($order_id,$invoice_id,$status){
     #update the bitpay transactions table
     $table_name = '_bitpay_checkout_transactions';
     switch($status){
-        case 'processing':
+        case 'pending':
         default:
         $sql = "INSERT INTO ".$table_name." (order_id,transaction_id,transaction_status) VALUES ('$order_id','$invoice_id','$status') ";
         $wpdb->get_results($sql);
@@ -445,14 +446,15 @@ function pw_edd_process_payment($purchase_data) {
             $use_modal = intval($bitpay_checkout_options['bitpay_checkout_flow']);
             //use the modal if '1', otherwise redirect
 
-            #add some order notes
-            bpcedd_addOrderNote($params->orderId,$invoiceID,'processing');
            
             if ($use_modal == 2):
+                 #add some order notes
+            bpcedd_addOrderNote($params->orderId,$invoiceID,'pending');
                 wp_redirect($invoice->BPC_getInvoiceURL());
             else:
-                #edd_send_to_success_page();
-                wp_redirect($params->redirectURL.'&bpedd=1&$invoiceID='.$invoiceID);
+                 #add some order notes
+            bpcedd_addOrderNote($params->orderId,$invoiceID,'pending');
+            wp_redirect($params->redirectURL.'&bpedd=1&$invoiceID='.$invoiceID);
            endif;        
     }
     else {
