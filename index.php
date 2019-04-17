@@ -154,7 +154,7 @@ function bitpay_edd_cart_fix(WP_REST_Request $request)
 
 
 
-function enable_bitpayquickpay_js()
+function enable_bitpay_edd_js()
 {
     global $edd_options;
     $bitpay_checkout_options = $edd_options;
@@ -186,7 +186,7 @@ function enable_bitpayquickpay_js()
 
     <?php
 }
-add_action('wp_enqueue_scripts', 'enable_bitpayquickpay_js');
+add_action('wp_enqueue_scripts', 'enable_bitpay_edd_js');
 
 #autoloader
 function BP_EDD_autoloader($class)
@@ -201,18 +201,18 @@ function BP_EDD_autoloader($class)
 spl_autoload_register('BP_EDD_autoloader');
 
 #register the gateway
-function pw_edd_register_gateway($gateways) {
+function bpc_pw_edd_register_gateway($gateways) {
 	$gateways['bp_checkout_edd'] = array('admin_label' => 'BitPay Checkout', 'checkout_label' => __('BitPay Checkout', 'pw_edd'));
 	return $gateways;
 }
-add_filter('edd_payment_gateways', 'pw_edd_register_gateway');
+add_filter('edd_payment_gateways', 'bpc_pw_edd_register_gateway');
 
 #hide the credit card form
-function pw_edd_bp_checkout_edd_cc_form() {
+function bpc_pw_edd_bp_checkout_edd_cc_form() {
 	// register the action to remove default CC form
 	return;
 }
-add_action('edd_bp_checkout_edd_cc_form', 'pw_edd_bp_checkout_edd_cc_form');
+add_action('edd_bp_checkout_edd_cc_form', 'bpc_pw_edd_bp_checkout_edd_cc_form');
 
 function bp_checkout_edd_register_gateway_section($gateway_sections)
 {
@@ -222,13 +222,13 @@ function bp_checkout_edd_register_gateway_section($gateway_sections)
 add_filter('edd_settings_sections_gateways', 'bp_checkout_edd_register_gateway_section');
 
 
-function pw_edd_payment_icon($icons) {
+function bpc_pw_edd_payment_icon($icons) {
     $icons[ plugins_url('/bitpaycheckout.png', __FILE__)] = 'BitPay Checkout';
     return $icons;
 }
-add_filter('edd_accepted_payment_icons', 'pw_edd_payment_icon');
+add_filter('edd_accepted_payment_icons', 'bpc_pw_edd_payment_icon');
 # adds the settings to the Payment Gateways section
-function pw_edd_add_settings($gateway_settings) {
+function bpc_pw_edd_add_settings($gateway_settings) {
 	$bp_checkout_edd_settings = array(
 		array(
 			'id' => 'bp_checkout_edd_settings',
@@ -279,7 +279,7 @@ function pw_edd_add_settings($gateway_settings) {
     $gateway_settings['bp_checkout_edd'] = $bp_checkout_edd_settings;
     return $gateway_settings;
 }
-add_filter('edd_settings_gateways', 'pw_edd_add_settings');
+add_filter('edd_settings_gateways', 'bpc_pw_edd_add_settings');
 
 #yes no for select box
 function bpcedd_get_yes_no() {
@@ -370,7 +370,7 @@ function bpcedd_addOrderNote($order_id,$invoice_id,$status){
 }
 
 #process the payment
-function pw_edd_process_payment($purchase_data) {
+function bpc_pw_edd_process_payment($purchase_data) {
     // payment processing happens here
   
     global $edd_options;
@@ -467,7 +467,7 @@ function pw_edd_process_payment($purchase_data) {
 		edd_send_back_to_checkout('?payment-mode=' . $purchase_data['post_data']['edd-gateway']);
 	}
 }
-add_action('edd_gateway_bp_checkout_edd', 'pw_edd_process_payment');
+add_action('edd_gateway_bp_checkout_edd', 'bpc_pw_edd_process_payment');
 
 #get the extension version
 function BP_EDD_getBitPayVersionInfo()
