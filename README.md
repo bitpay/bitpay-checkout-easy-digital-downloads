@@ -1,6 +1,6 @@
 ## Build Status
 
-[![Build Status](https://travis-ci.org/bitpay-checkout-easy-digital-downloads.svg?branch=master)](https://travis-ci.org/bitpay/bitpay-checkout-easy-digital-downloads)
+[![Build Status](https://travis-ci.org/bitpay/bitpay-checkout-easy-digital-downloads.svg?branch=master)](https://travis-ci.org/bitpay/bitpay-checkout-easy-digital-downloads)
 
 # Notice
 
