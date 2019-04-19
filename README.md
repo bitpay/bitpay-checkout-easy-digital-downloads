@@ -23,8 +23,7 @@ This version requires the following
 
 # Plugin Fields
 
-After the plugin is activated, BitPay QuickPay will appear in the left navigation of Wordpress
-
+After the plugin is activated, BitPay Checkout will appear as a gateway in the *Easy Digital Downloads > Payment Gateway* section
 
 * **Merchant Tokens**
 	* A ***development*** or ***production*** token will need to be set
