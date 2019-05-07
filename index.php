@@ -11,23 +11,40 @@ if ( ! defined( 'ABSPATH' ) ): exit;endif;
 
 global $current_user;
 
+#check and see if requirements are met for turning on plugin
+function BPC_EDD_isCurl(){
+    return function_exists('curl_version');
+}
+
 #create the table if it doesnt exist
 function bitpayedd_checkout_plugin_setup()
 {
         global $wpdb;
-        $table_name = '_bitpay_checkout_transactions';
-        $charset_collate = $wpdb->get_charset_collate();
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name(
-        `id` int(11) NOT NULL AUTO_INCREMENT,
-        `order_id` int(11) NOT NULL,
-        `transaction_id` varchar(255) NOT NULL,
-        `transaction_status` varchar(50) NOT NULL DEFAULT 'new',
-        `date_added` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (`id`)
-        ) $charset_collate;";
+        $errors = array();
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta($sql);
+        if (!BPC_EDD_isCurl()){
+            $errors[] = 'cUrl needs to be installed/enabled for BitPay Checkout for Easy Digital Downloads to function';
+        }
+       
+        if (empty($errors)):
+            $table_name = '_bitpay_checkout_transactions';
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE IF NOT EXISTS $table_name(
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `order_id` int(11) NOT NULL,
+            `transaction_id` varchar(255) NOT NULL,
+            `transaction_status` varchar(50) NOT NULL DEFAULT 'new',
+            `date_added` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`)
+            ) $charset_collate;";
+    
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+            dbDelta($sql);
+        return false;
+        else:
+            $plugins_url = admin_url('plugins.php');
+            wp_die($errors[0] . '<br><a href="' . $plugins_url . '">Return to plugins screen</a>');
+        endif;
 
 }
 register_activation_hook(__FILE__, 'bitpayedd_checkout_plugin_setup');
@@ -448,7 +465,7 @@ function bpc_pw_edd_process_payment($purchase_data) {
             
             $item = new BPC_Item($config, $params);
             $invoice = new BPC_Invoice($item);
-           
+            
             //this creates the invoice with all of the config params from the item
             $invoice->BPC_createInvoice();
             $invoiceData = json_decode($invoice->BPC_getInvoiceData());
