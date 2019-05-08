@@ -5,7 +5,6 @@ function showBPInvoice($env, $invoiceID,$orderId,$cart_url,$fix_url) {
         var is_paid = false
 		window.addEventListener("message", function(event) {
 		    payment_status = event.data.status;
-           
             if(payment_status == 'paid'){
                 is_paid = true
             }

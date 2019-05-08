@@ -4,7 +4,7 @@ Tags: bitcoin, bitcoin cash, payments, bitpay, cryptocurrency, payment gateway
 Requires at least: 4.9
 Tested up to: 5.0.4
 Requires PHP: 5.5
-Stable tag: 1.0.0.0
+Stable tag: 1.0.0.2
 License: MIT License (MIT)
 License URI: https://github.com/bitpay/bitpay-checkout-for-woocommerce/blob/master/LICENSE
 
@@ -104,3 +104,11 @@ You can contact our support team via the following form https://bitpay.com/reque
 10. BitPay merchant dashboard - the invoice previously paid is recorded under the "Payments" section.
 11. BitPay merchant dashboard - detailed invoice view
 12. Wordpress Easy Digital Downloads - order view
+
+== Changelog ==
+
+= 1.0.0.2 =
+* Bug squashing
+
+= 1.0.0.1 =
+* Updated to check for server requirements.  To verify, deactivate then reactivate the plugin (your settings will be saved)
