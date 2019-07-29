@@ -3,7 +3,7 @@
  * Plugin Name: BitPay Checkout for Easy Digital Downloads
  * Plugin URI: http://www.bitpay.com
  * Description: Create Invoices and process through BitPay.  Configure in your <a href ="edit.php?post_type=download&page=edd-settings&tab=gateways">Easy Digital Downloads->Payment Gateways</a>.
- * Version: 1.0.0.3
+ * Version: 1.0.0.4
  * Author: BitPay
  * Author URI: mailto:integrations@bitpay.com?subject=BitPay Checkout for Easy Digital Downloads
  */
@@ -476,8 +476,6 @@ function bpc_pw_edd_process_payment($purchase_data)
         $params->redirectURL = edd_get_success_page_uri() . '?order_id=' . $params->orderId;
         #http://<host>/wp-json/bitpay/ipn/status
         $params->extendedNotifications = true;
-        $params->transactionSpeed = 'medium';
-        $params->acceptanceWindow = 1200000;
 
         $item = new BPC_Item($config, $params);
         $invoice = new BPC_Invoice($item);
