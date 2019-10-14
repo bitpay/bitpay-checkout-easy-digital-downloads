@@ -3,7 +3,7 @@
  * Plugin Name: BitPay Checkout for Easy Digital Downloads
  * Plugin URI: http://www.bitpay.com
  * Description: Create Invoices and process through BitPay.  Configure in your <a href ="edit.php?post_type=download&page=edd-settings&tab=gateways">Easy Digital Downloads->Payment Gateways</a>.
- * Version: 1.0.1910
+ * Version: 1.1.1910
  * Author: BitPay
  * Author URI: mailto:integrations@bitpay.com?subject=BitPay Checkout for Easy Digital Downloads
  */
