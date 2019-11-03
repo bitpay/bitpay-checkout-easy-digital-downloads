@@ -3,7 +3,7 @@
  * Plugin Name: BitPay Checkout for Easy Digital Downloads
  * Plugin URI: http://www.bitpay.com
  * Description: Create Invoices and process through BitPay.  Configure in your <a href ="edit.php?post_type=download&page=edd-settings&tab=gateways">Easy Digital Downloads->Payment Gateways</a>.
- * Version: 1.1.1910
+ * Version: 1.1.1911
  * Author: BitPay
  * Author URI: mailto:integrations@bitpay.com?subject=BitPay Checkout for Easy Digital Downloads
  */
@@ -94,17 +94,17 @@ function bitpay_edd_ipn(WP_REST_Request $request)
             if ($orderStatus->data->status == 'confirmed'):
                 $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'], $invoice_id) . '">' . $invoice_id . '</a> processing has been completed.';
 
-                $sql = "INSERT INTO " . $wpdb->comments . " (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type)
-	        VALUES ($order_id,NOW(),NOW(),'$note','edd_payment_note')";
+               
+            
+                $now = date('Y-m-d H:i:s');
+                $wpdb->query($wpdb->prepare("INSERT INTO ".$wpdb->comments." (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type) 
+                VALUES (%s,%s,%s,%s,%s)",$order_id,$now,$now,$note,'edd_payment_note'));
 
-                $wpdb->get_results($sql);
-
-                $sql = "UPDATE " . $table_name . " SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
-                $wpdb->get_results($sql);
-
+                $wpdb->query($wpdb->prepare("UPDATE ".$table_name.=" SET  transaction_status = %s WHERE order_id = %s AND transaction_id = %s",$event->name,$order_id,$invoice_id));
                 #update the order status
-                $sql = "UPDATE " . $wpdb->posts . " SET post_status = 'publish' WHERE ID = $order_id";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("UPDATE ". $wpdb->posts." SET post_status = 'publish' WHERE ID = %s",$order_id));
+
+
             endif;
 
             break;
@@ -113,17 +113,14 @@ function bitpay_edd_ipn(WP_REST_Request $request)
             if ($orderStatus->data->status == 'paid'):
                 $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'], $invoice_id) . '">' . $invoice_id . '</a> is processing.';
 
-                $sql = "INSERT INTO " . $wpdb->comments . " (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type)
-	        VALUES ($order_id,NOW(),NOW(),'$note','edd_payment_note')";
+                $now = date('Y-m-d H:i:s');
+                $wpdb->query($wpdb->prepare("INSERT INTO ".$wpdb->comments." (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type) 
+                VALUES (%s,%s,%s,%s,%s)",$order_id,$now,$now,$note,'edd_payment_note'));
 
-                $wpdb->get_results($sql);
-
-                $sql = "UPDATE " . $table_name . " SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("UPDATE ".$table_name.=" SET  transaction_status = %s WHERE order_id = %s AND transaction_id = %s",$event->name,$order_id,$invoice_id));
 
                 #update the order status
-                $sql = "UPDATE " . $wpdb->posts . " SET post_status = 'processing' WHERE ID = $order_id";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("UPDATE ". $wpdb->posts." SET post_status = 'processing' WHERE ID = %s",$order_id));
             endif;
 
             break;
@@ -132,17 +129,14 @@ function bitpay_edd_ipn(WP_REST_Request $request)
             if ($orderStatus->data->status == 'invalid'):
                 $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'], $invoice_id) . '">' . $invoice_id . '</a> has become invalid because of network congestion.  Order will automatically update when the status changes.';
 
-                $sql = "INSERT INTO " . $wpdb->comments . " (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type)
-	        VALUES ($order_id,NOW(),NOW(),'$note','edd_payment_note')";
+                $now = date('Y-m-d H:i:s');
+                $wpdb->query($wpdb->prepare("INSERT INTO ".$wpdb->comments." (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type) 
+                VALUES (%s,%s,%s,%s,%s)",$order_id,$now,$now,$note,'edd_payment_note'));
 
-                $wpdb->get_results($sql);
-
-                $sql = "UPDATE " . $table_name . " SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("UPDATE ".$table_name.=" SET  transaction_status = %s WHERE order_id = %s AND transaction_id = %s",$event->name,$order_id,$invoice_id));
 
                 #update the order status
-                $sql = "UPDATE " . $wpdb->posts . " SET post_status = 'failed' WHERE ID = $order_id";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("UPDATE ". $wpdb->posts." SET post_status = 'failed' WHERE ID = %s",$order_id));
             endif;
             break;
 
@@ -151,28 +145,24 @@ function bitpay_edd_ipn(WP_REST_Request $request)
                 //delete the previous order
                 wp_delete_post($order_id, true);
                 //delete any notes
-                $sql = "DELETE FROM " . $wpdb->comments . " WHERE comment_post_ID = $order_id";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("DELETE FROM " . $wpdb->comments . " WHERE comment_post_ID = %s",$order_id));
 
                 #delete from the bitpay transaction table
-                $sql = "DELETE FROM " . $table_name . " WHERE order_id = '$order_id'";
-                $wpdb->get_results($sql);
+                $wpdb->query($wpdb->prepare("DELETE FROM " . $table_name . " WHERE order_id =%s",$order_id));
+              
             endif;
             break;
 
         case 'invoice_refundComplete':
             $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'], $invoice_id) . '">' . $invoice_id . '</a> has been refunded.';
-            $sql = "INSERT INTO " . $wpdb->comments . " (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type)
-        VALUES ($order_id,NOW(),NOW(),'$note','edd_payment_note')";
+            $now = date('Y-m-d H:i:s');
+            $wpdb->query($wpdb->prepare("INSERT INTO ".$wpdb->comments." (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type) 
+            VALUES (%s,%s,%s,%s,%s)",$order_id,$now,$now,$note,'edd_payment_note'));
 
-            $wpdb->get_results($sql);
+            $wpdb->query($wpdb->prepare("UPDATE ".$table_name.=" SET  transaction_status = %s WHERE order_id = %s AND transaction_id = %s",$event->name,$order_id,$invoice_id));
 
-            $sql = "UPDATE " . $table_name . " SET transaction_status = '$event->name'  WHERE order_id = '$order_id' AND transaction_id = '$invoice_id'";
-            $wpdb->get_results($sql);
-
-            #update the order status
-            $sql = "UPDATE " . $wpdb->posts . " SET post_status = 'refunded' WHERE ID = $order_id";
-            $wpdb->get_results($sql);
+           #update the order status
+           $wpdb->query($wpdb->prepare("UPDATE ". $wpdb->posts." SET post_status = 'refunded' WHERE ID = %s",$order_id));
             break;
     }
 }
@@ -182,20 +172,19 @@ function bitpay_edd_cart_fix(WP_REST_Request $request)
     global $wpdb;
     $data = $request->get_params();
     $order_id = $data['orderid'];
+    
+    $table_name = '_bitpay_checkout_transactions';
+
     //delete the order
     wp_delete_post($order_id, true);
     #delete any comments/order notes
 
-    $sql = "DELETE FROM " . $wpdb->comments . " WHERE comment_post_ID = $order_id";
+  
+     $wpdb->query($wpdb->prepare("DELETE FROM " . $wpdb->comments . " WHERE comment_post_ID = %s",$order_id));
+
+     #delete from the bitpay transaction table
+     $wpdb->query($wpdb->prepare("DELETE FROM " . $table_name . " WHERE order_id =%s",$order_id));
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    $wpdb->get_results($sql);
-
-    #delete from the bitpay transaction table
-    $table_name = '_bitpay_checkout_transactions';
-
-    $sql = "DELETE FROM " . $table_name . " WHERE order_id = '$order_id'";
-    $wpdb->get_results($sql);
-
 }
 
 function enable_bitpay_edd_js()
@@ -396,22 +385,26 @@ function bpcedd_addOrderNote($order_id, $invoice_id, $status)
             $note = 'BitPay Invoice ID: <a target = "_blank" href = "' . bpcedd_getEndPointUrl($bitpay_checkout_options['test_mode'], $invoice_id) . '">' . $invoice_id . '</a> is pending.';
             break;
     }
+   
 
-    $sql = "INSERT INTO " . $wpdb->comments . " (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type)
-    VALUES ($order_id,NOW(),NOW(),'$note','edd_payment_note')";
-    $wpdb->get_results($sql);
+    $now = date('Y-m-d H:i:s');
+    $wpdb->query($wpdb->prepare("INSERT INTO ".$wpdb->comments." (comment_post_ID,comment_date,comment_date_gmt,comment_content,comment_type) 
+    VALUES (%s,%s,%s,%s,%s)",$order_id,$now,$now,$note,'edd_payment_note'));
 
     #update the order note to say processing
-    $sql = "UPDATE " . $wpdb->posts . " SET post_status = '$status' WHERE ID = $order_id";
-    $wpdb->get_results($sql);
+    #$sql = "UPDATE " . $wpdb->posts . " SET post_status = '$status' WHERE ID = $order_id";
+    #$wpdb->get_results($sql);
+    $wpdb->query($wpdb->prepare("UPDATE ".  $wpdb->posts." SET post_status = %s WHERE ID = %s",$status,$order_id));
 
     #update the bitpay transactions table
     $table_name = '_bitpay_checkout_transactions';
     switch ($status) {
         case 'pending':
         default:
-            $sql = "INSERT INTO " . $table_name . " (order_id,transaction_id,transaction_status) VALUES ('$order_id','$invoice_id','$status') ";
-            $wpdb->get_results($sql);
+            #$sql = "INSERT INTO " . $table_name . " (order_id,transaction_id,transaction_status) VALUES ('$order_id','$invoice_id','$status') ";
+           # $wpdb->get_results($sql);
+           $wpdb->query($wpdb->prepare("INSERT INTO ".$table_name." (order_id,transaction_id,transaction_status) 
+           VALUES(%s,%s,%s)",$order_id,$invoice_id,$status));
             break;
     }
 
