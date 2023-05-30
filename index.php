@@ -1,5 +1,8 @@
 <?php
 /**
+ * Plugin to add BitPay payments to EDD.
+ *
+ * @package     BitPayLib
  * Plugin Name: BitPay Checkout for Easy Digital Downloads
  * Plugin URI: http://www.bitpay.com
  * Description: Create Invoices and process through BitPay.  Configure in your <a href ="edit.php?post_type=download&page=edd-settings&tab=gateways">Easy Digital Downloads->Payment Gateways</a>.
@@ -8,21 +11,30 @@
  * Author URI: mailto:integrations@bitpay.com?subject=BitPay Checkout for Easy Digital Downloads
  */
 
-if (!defined('ABSPATH')): exit;endif;
-
-require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
-#autoloader
-function BP_EDD_autoloader($class)
-{
-    if (strpos($class, 'BitPay') !== false):
-        if (!class_exists('BitPayLib/' . $class, false)):
-            #doesn't exist so include it
-            include 'BitPayLib/' . $class . '.php';
-        endif;
-    endif;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-spl_autoload_register('BP_EDD_autoloader');
+require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
 
-$bitPayPluginSetup = new BitPayPluginSetup();
-$bitPayPluginSetup->execute();
+$files_to_load = array(
+	'class-bitpaycheckouttransactions.php',
+	'class-bitpayclientfactory.php',
+	'class-bitpayeddabandonorder.php',
+	'class-bitpayeddaddsettings.php',
+	'class-bitpayeddprintenqueuescripts.php',
+	'class-bitpayeddprocesspayment.php',
+	'class-bitpayendpoint.php',
+	'class-bitpayinvoicefactory.php',
+	'class-bitpayipnprocess.php',
+	'class-bitpaypluginsetup.php',
+);
+
+foreach ( $files_to_load as $file ) {
+	include_once 'BitPayLib/' . $file;
+}
+
+use BitPayLib\BitPayPluginSetup;
+
+$bit_pay_plugin_setup = new BitPayPluginSetup();
+$bit_pay_plugin_setup->execute();
