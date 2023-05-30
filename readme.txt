@@ -110,6 +110,7 @@ You can contact our support team via the following form https://bitpay.com/reque
 = 2.0.0 =
 * Rewrote plugin to use PHP 8.0 and EDD 3.1
 * Updated plugin to use BitPay SDK 8.0.0-dev
+* The cart is cleaned after place order
 
 = 1.1.1911 =
 * Fixed issue where IPN updates may not process correctly
