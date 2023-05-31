@@ -1,6 +1,6 @@
 <?php
 
-namespace BitPayLib;
+namespace BitPayEddLib;
 
 use BitPaySDK\Model\Invoice\Buyer;
 use BitPaySDK\Model\Invoice\Invoice;

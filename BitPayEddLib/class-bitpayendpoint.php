@@ -1,6 +1,6 @@
 <?php
 
-namespace BitPayLib;
+namespace BitPayEddLib;
 
 class BitPayEndpoint {
 	public static function get_type( int $mode ): string {

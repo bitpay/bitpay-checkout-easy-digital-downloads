@@ -2,7 +2,7 @@
 /**
  * Plugin to add BitPay payments to EDD.
  *
- * @package     BitPayLib
+ * @package     BitPayEddLib
  * Plugin Name: BitPay Checkout for Easy Digital Downloads
  * Plugin URI: http://www.bitpay.com
  * Description: Create Invoices and process through BitPay.  Configure in your <a href ="edit.php?post_type=download&page=edd-settings&tab=gateways">Easy Digital Downloads->Payment Gateways</a>.
@@ -31,10 +31,10 @@ $files_to_load = array(
 );
 
 foreach ( $files_to_load as $file ) {
-	include_once 'BitPayLib/' . $file;
+	include_once 'BitPayEddLib/' . $file;
 }
 
-use BitPayLib\BitPayPluginSetup;
+use BitPayEddLib\BitPayPluginSetup;
 
 $bit_pay_plugin_setup = new BitPayPluginSetup();
 $bit_pay_plugin_setup->execute();
