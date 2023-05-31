@@ -1,6 +1,6 @@
 <?php
 
-namespace BitPayLib;
+namespace BitPayEddLib;
 
 use wpdb;
 
