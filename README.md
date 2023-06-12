@@ -32,8 +32,10 @@ After the plugin is activated, BitPay Checkout will appear as a gateway in the *
 
 * **Checkout Flow**
 	* If set to ***Redirect***, then the user will be sent to an invoice at BitPay.com to complete their payment, and then redirected to the merchant site.  	
-	* If set to ***Modal***, the user willl stay on the merchant site and complete their payment.
-	
+	* If set to ***Modal***, the user will stay on the merchant site and complete or cancel their payment.
+
+> **_NOTE:_**  Canceled payment will set order as abandoned.
+
 # How to use
 
 * Enable the plugin
@@ -45,5 +47,5 @@ After the plugin is activated, BitPay Checkout will appear as a gateway in the *
 # IPN
 BitPay Checkout provides an integrated IPN service that will update orders as the status changes.
 
-Initial orders will be set to a **Pending** state, then progress to **Processing**, and finally to **Completed**.  If an invoices is **Expired** (ie, someone creates an order but never finishes the checkout), the IPN will remove that order.
+Initial orders will be set to a **Pending** state, then progress to **Processing**, and finally to **Completed**.  If an invoices is **Expired** (ie, someone creates an order but never finishes the checkout), the IPN will set order as abandoned.
 
