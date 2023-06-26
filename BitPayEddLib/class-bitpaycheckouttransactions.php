@@ -65,6 +65,20 @@ class BitPayCheckoutTransactions {
 		$this->get_wpdb()->query( $query );
 	}
 
+	public function get_order_id_by_invoice_id(mixed $invoice_id): ?int {
+		$table_name = $this->table_name;
+		$wp_db      = $this->get_wpdb();
+		$sql        = $wp_db->prepare(
+			"SELECT order_id FROM $table_name WHERE transaction_id = %s LIMIT 1",
+			$invoice_id
+		);
+		$order_id   = $wp_db->get_var( $sql );
+		if ( ! $order_id ) {
+			return null;
+		}
+		return (int) $order_id;
+	}
+
 	private function get_wpdb(): wpdb {
 		global $wpdb;
 		return $wpdb;
