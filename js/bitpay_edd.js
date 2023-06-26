@@ -1,4 +1,4 @@
-function showBPInvoice($env, $invoiceID,$orderId,$cart_url,$fix_url) {
+function showBPInvoice($env, $invoiceID,$cart_url,$fix_url) {
 
 		let payment_status = null;
 		let is_paid        = false
@@ -26,7 +26,7 @@ function showBPInvoice($env, $invoiceID,$orderId,$cart_url,$fix_url) {
 					jQuery( '#primary' ).css( 'opacity', '1' );
 				} else {
 					let myKeyVals = {
-						orderid: $orderId
+						invoiceid: $invoiceID
 					}
 
 					let saveData = jQuery.ajax(

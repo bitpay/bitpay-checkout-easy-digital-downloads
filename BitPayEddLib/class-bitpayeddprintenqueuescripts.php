@@ -19,13 +19,12 @@ class BitPayEddPrintEnqueueScripts {
 				);
 
 				var urlParams = new URLSearchParams(window.location.search);
-				var $oid = urlParams.get('order_id')
 				var $iid = urlParams.get('invoiceID')
 				$cart_url = "<?php echo esc_js( edd_get_checkout_uri() ); ?>"
 				$fix_url = "<?php echo esc_js( get_home_url() . '/wp-json/bitpay-edd/cartfix/update' ); ?>"
 
 				setTimeout(function () {
-						showBPInvoice('<?php echo esc_js( $mode ); ?>', $iid, $oid, $cart_url, $fix_url)
+						showBPInvoice('<?php echo esc_js( $mode ); ?>', $iid, $cart_url, $fix_url)
 					},
 					250
 				);

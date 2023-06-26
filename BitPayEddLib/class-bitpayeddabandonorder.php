@@ -12,8 +12,12 @@ class BitPayEddAbandonOrder {
 	}
 
 	public function execute( WP_REST_Request $request ): void {
-		$data     = $request->get_params();
-		$order_id = $data['orderid'];
+		$data       = $request->get_params();
+		$invoice_id = $data['invoiceid'];
+		$order_id   = $this->bitpay_checkout_transactions->get_order_id_by_invoice_id($invoice_id);
+		if ( ! $order_id ) {
+			die();
+		}
 
 		$this->bitpay_checkout_transactions->update_last_pending_status( 'invoice_expired', $order_id );
 		edd_update_order_status( $order_id, 'abandoned' );
