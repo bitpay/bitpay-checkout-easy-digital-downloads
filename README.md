@@ -1,6 +1,6 @@
 <img src="https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg" width="150">
 
-# BitPay PHP Client
+# BitPay Checkout for Easy Digital Downloads
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/bitpay/bitpay-checkout-easy-digital-downloads/master/LICENSE)
 
 # Notice
