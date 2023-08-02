@@ -6,7 +6,7 @@ Tested up to: 6.2.2
 Requires PHP: 8.0
 Stable tag: 2.0.0
 License: MIT License (MIT)
-License URI: https://github.com/bitpay/bitpay-checkout-for-woocommerce/blob/master/LICENSE
+License URI: https://github.com/bitpay/bitpay-checkout-easy-digital-downloads/blob/master/LICENSE
 
 The most secure and fastest way to accept crypto payments (Bitcoin, Bitcoin Cash, etc).
 
