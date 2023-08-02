@@ -1,14 +1,8 @@
 {
   "name": "bitpay/checkout-easy-digital-downloads",
   "type": "library",
-  "repositories": [
-    {
-      "url": "https://github.com/bitpay/php-bitpay-client-v2.git",
-      "type": "git"
-    }
-  ],
   "require": {
-    "bitpay/sdk": "dev-8.0.0-dev"
+    "bitpay/sdk": "8.0.1"
   },
   "require-dev": {
     "wp-coding-standards/wpcs": "dev-develop"

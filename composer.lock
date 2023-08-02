@@ -4,32 +4,34 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "10a4fc3e8f5397dc36300c29605ddd53",
+    "content-hash": "18937da7332b9bb9e2f9f41b119ca622",
     "packages": [
         {
             "name": "bitpay/key-utils",
-            "version": "1.1.1",
+            "version": "1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/bitpay/bitpay-php-keyutils.git",
-                "reference": "d17fe78d802f74103d730089ff7c3345fb25a9d7"
+                "reference": "44283014751d1886b41c7de29f1972737d6dfe4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bitpay/bitpay-php-keyutils/zipball/d17fe78d802f74103d730089ff7c3345fb25a9d7",
-                "reference": "d17fe78d802f74103d730089ff7c3345fb25a9d7",
+                "url": "https://api.github.com/repos/bitpay/bitpay-php-keyutils/zipball/44283014751d1886b41c7de29f1972737d6dfe4d",
+                "reference": "44283014751d1886b41c7de29f1972737d6dfe4d",
                 "shasum": ""
             },
             "require": {
                 "ext-bcmath": "*",
                 "ext-curl": "*",
-                "ext-gmp": "*",
                 "ext-iconv": "*",
                 "ext-json": "*",
                 "ext-openssl": "*"
             },
             "require-dev": {
                 "phpunit/phpunit": "^7.5 || ^9.0"
+            },
+            "suggest": {
+                "ext-gmp": "Required to use this package with GMP instead of BCMath"
             },
             "type": "library",
             "autoload": {
@@ -50,17 +52,23 @@
             "description": "BitPay Utils pack for cryptography",
             "support": {
                 "issues": "https://github.com/bitpay/bitpay-php-keyutils/issues",
-                "source": "https://github.com/bitpay/bitpay-php-keyutils/tree/1.1.1"
+                "source": "https://github.com/bitpay/bitpay-php-keyutils/tree/1.1.2"
             },
-            "time": "2022-10-17T13:58:20+00:00"
+            "time": "2023-06-15T19:11:27+00:00"
         },
         {
             "name": "bitpay/sdk",
-            "version": "dev-8.0.0-dev",
+            "version": "8.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/bitpay/php-bitpay-client-v2.git",
-                "reference": "77d760ca6046bd2824f0e3dc886c838172ba9f4f"
+                "reference": "31c3207a3c6ea98a082858fcd45493d9c146589e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bitpay/php-bitpay-client-v2/zipball/31c3207a3c6ea98a082858fcd45493d9c146589e",
+                "reference": "31c3207a3c6ea98a082858fcd45493d9c146589e",
+                "shasum": ""
             },
             "require": {
                 "bitpay/key-utils": "^1.1",
@@ -72,7 +80,7 @@
                 "symfony/yaml": "^5.4 || ^6.0 || ^6.1 || ^6.2"
             },
             "require-dev": {
-                "phpunit/phpunit": "^7.5 || ^9.0"
+                "phpunit/phpunit": "^9.0 || ^10.2.2"
             },
             "type": "library",
             "autoload": {
@@ -80,17 +88,7 @@
                     "BitPaySDK\\": "src/BitPaySDK"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "BitPaySDK\\Test\\": "test/unit/BitPaySDK",
-                    "BitPaySDK\\Integration\\": "test/Integration/BitPaySDK"
-                }
-            },
-            "scripts": {
-                "setup": [
-                    "php setup/ConfigGenerator.php"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -109,7 +107,11 @@
                 "gateway",
                 "payment"
             ],
-            "time": "2023-05-03T19:34:05+00:00"
+            "support": {
+                "issues": "https://github.com/bitpay/php-bitpay-client-v2/issues",
+                "source": "https://github.com/bitpay/php-bitpay-client-v2/tree/8.0.1"
+            },
+            "time": "2023-07-20T17:53:52+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -996,28 +998,28 @@
         },
         {
             "name": "phpcsstandards/phpcsextra",
-            "version": "1.0.3",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHPCSExtra.git",
-                "reference": "7029c051cd310e2e17c6caea3429bfbe290c41ae"
+                "reference": "61a9be9f74a53735f7c421d7de8dc64fa80488e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSExtra/zipball/7029c051cd310e2e17c6caea3429bfbe290c41ae",
-                "reference": "7029c051cd310e2e17c6caea3429bfbe290c41ae",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSExtra/zipball/61a9be9f74a53735f7c421d7de8dc64fa80488e6",
+                "reference": "61a9be9f74a53735f7c421d7de8dc64fa80488e6",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.4",
-                "phpcsstandards/phpcsutils": "^1.0",
+                "phpcsstandards/phpcsutils": "^1.0.8",
                 "squizlabs/php_codesniffer": "^3.7.1"
             },
             "require-dev": {
                 "php-parallel-lint/php-console-highlighter": "^1.0",
                 "php-parallel-lint/php-parallel-lint": "^1.3.2",
-                "phpcsstandards/phpcsdevcs": "^1.1.5",
-                "phpcsstandards/phpcsdevtools": "^1.2.0",
+                "phpcsstandards/phpcsdevcs": "^1.1.6",
+                "phpcsstandards/phpcsdevtools": "^1.2.1",
                 "phpunit/phpunit": "^4.5 || ^5.0 || ^6.0 || ^7.0"
             },
             "type": "phpcodesniffer-standard",
@@ -1055,20 +1057,20 @@
                 "issues": "https://github.com/PHPCSStandards/PHPCSExtra/issues",
                 "source": "https://github.com/PHPCSStandards/PHPCSExtra"
             },
-            "time": "2023-03-28T17:48:27+00:00"
+            "time": "2023-07-19T19:40:11+00:00"
         },
         {
             "name": "phpcsstandards/phpcsutils",
-            "version": "1.0.6",
+            "version": "1.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHPCSUtils.git",
-                "reference": "ba259eaaefac118648e1263919b9530667ffcf01"
+                "reference": "69465cab9d12454e5e7767b9041af0cd8cd13be7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/ba259eaaefac118648e1263919b9530667ffcf01",
-                "reference": "ba259eaaefac118648e1263919b9530667ffcf01",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/69465cab9d12454e5e7767b9041af0cd8cd13be7",
+                "reference": "69465cab9d12454e5e7767b9041af0cd8cd13be7",
                 "shasum": ""
             },
             "require": {
@@ -1081,7 +1083,7 @@
                 "php-parallel-lint/php-console-highlighter": "^1.0",
                 "php-parallel-lint/php-parallel-lint": "^1.3.2",
                 "phpcsstandards/phpcsdevcs": "^1.1.6",
-                "yoast/phpunit-polyfills": "^1.0.5"
+                "yoast/phpunit-polyfills": "^1.0.5 || ^2.0.0"
             },
             "type": "phpcodesniffer-standard",
             "extra": {
@@ -1128,7 +1130,7 @@
                 "issues": "https://github.com/PHPCSStandards/PHPCSUtils/issues",
                 "source": "https://github.com/PHPCSStandards/PHPCSUtils"
             },
-            "time": "2023-05-27T13:39:12+00:00"
+            "time": "2023-07-16T21:39:41+00:00"
         },
         {
             "name": "squizlabs/php_codesniffer",
@@ -1193,19 +1195,19 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/WordPress/WordPress-Coding-Standards.git",
-                "reference": "a328aff1e0b05e55e61a02b9f4faae6482cfc3ad"
+                "reference": "efbaa1df3cd584418a8908e0340f3b83d41b7cd1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WordPress/WordPress-Coding-Standards/zipball/a328aff1e0b05e55e61a02b9f4faae6482cfc3ad",
-                "reference": "a328aff1e0b05e55e61a02b9f4faae6482cfc3ad",
+                "url": "https://api.github.com/repos/WordPress/WordPress-Coding-Standards/zipball/efbaa1df3cd584418a8908e0340f3b83d41b7cd1",
+                "reference": "efbaa1df3cd584418a8908e0340f3b83d41b7cd1",
                 "shasum": ""
             },
             "require": {
                 "ext-filter": "*",
                 "php": ">=5.4",
-                "phpcsstandards/phpcsextra": "^1.0",
-                "phpcsstandards/phpcsutils": "^1.0.5",
+                "phpcsstandards/phpcsextra": "^1.1.0",
+                "phpcsstandards/phpcsutils": "^1.0.8",
                 "squizlabs/php_codesniffer": "^3.7.2"
             },
             "require-dev": {
@@ -1242,13 +1244,12 @@
                 "source": "https://github.com/WordPress/WordPress-Coding-Standards",
                 "wiki": "https://github.com/WordPress/WordPress-Coding-Standards/wiki"
             },
-            "time": "2023-05-28T19:30:57+00:00"
+            "time": "2023-07-28T14:57:50+00:00"
         }
     ],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "bitpay/sdk": 20,
         "wp-coding-standards/wpcs": 20
     },
     "prefer-stable": false,
