@@ -34,7 +34,7 @@ class BitPayInvoiceFactory {
 	}
 
 	private function get_buyer(): Buyer {
-		if ( $this->get_edd_option( 'bitpay_checkout_capture_email' ) !== 1 ) {
+		if ( !$this->get_edd_option( 'bitpay_checkout_capture_email' ) ) {
 			return new Buyer();
 		}
 
@@ -51,9 +51,9 @@ class BitPayInvoiceFactory {
 		return $buyer_info;
 	}
 
-	private function get_edd_option( string $option_name ): string {
+	private function get_edd_option( string $option_name ): ?string {
 		global $edd_options;
 
-		return $edd_options[ $option_name ];
+		return $edd_options[ $option_name ] ?? null;
 	}
 }
