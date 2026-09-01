@@ -5,6 +5,7 @@ namespace BitPayEddLib;
 use BitPaySDK\Exceptions\BitPayException;
 use BitPaySDK\Exceptions\InvoiceQueryException;
 use BitPaySDK\Model\Facade;
+use BitPaySDK\Model\Invoice\Invoice;
 use stdClass;
 use WP_REST_Request;
 
@@ -36,12 +37,28 @@ class BitPayIpnProcess {
 
 		$data = $data->data;
 
-		// phpcs:ignore
-		$order_id   = $data->orderId;
 		$invoice_id = $data->id;
+
+		// SECURITY (IM-77): resolve the order from our own stored invoice ->
+		// order mapping, never from the callback body. Otherwise a genuinely
+		// paid invoice can be replayed against any other order id.
+		$order_id = $this->bitpay_checkout_transactions->get_order_id_by_invoice_id( $invoice_id );
+		if ( null === $order_id ) {
+			return;
+		}
 
 		$bitpay_client  = $this->bitpay_client_factory->create();
 		$bitpay_invoice = $bitpay_client->getInvoice( $invoice_id, Facade::POS, false );
+
+		// SECURITY (IM-77): for events that advance an order toward paid, the
+		// invoice must belong to this order and match its expected amount and
+		// currency. Defence in depth in case the invoice lookup itself is
+		// tampered with (DNS, compromised infrastructure).
+		$paid_events = array( 'invoice_completed', 'invoice_confirmed', 'invoice_paidInFull' );
+		if ( in_array( $event->name, $paid_events, true )
+			&& ! $this->invoice_matches_order( $bitpay_invoice, $order_id ) ) {
+			return;
+		}
 
 		switch ( $event->name ) {
 			case 'invoice_completed':
@@ -70,13 +87,34 @@ class BitPayIpnProcess {
 		return $edd_options;
 	}
 
+	private function invoice_matches_order( Invoice $bitpay_invoice, int $order_id ): bool {
+		if ( (string) $bitpay_invoice->getOrderId() !== (string) $order_id ) {
+			return false;
+		}
+
+		$expected_total    = (float) edd_get_payment_amount( $order_id );
+		$expected_currency = edd_get_payment_currency_code( $order_id );
+
+		if ( 0.00001 < abs( (float) $bitpay_invoice->getPrice() - $expected_total ) ) {
+			return false;
+		}
+
+		$invoice_currency  = strtoupper( (string) $bitpay_invoice->getCurrency() );
+		$expected_currency = strtoupper( (string) $expected_currency );
+		if ( $invoice_currency !== $expected_currency ) {
+			return false;
+		}
+
+		return true;
+	}
+
 	private function process_completed(
 		string $invoice_status,
 		string $invoice_id,
 		int $order_id,
 		string $event_name
 	): void {
-		if ( ! in_array( $invoice_status, array( 'confirmed', 'completed' ), true ) ) {
+		if ( ! in_array( $invoice_status, array( 'confirmed', 'complete' ), true ) ) {
 			return;
 		}
 
