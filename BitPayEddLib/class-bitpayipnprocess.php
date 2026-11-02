@@ -76,7 +76,7 @@ class BitPayIpnProcess {
 				$this->process_abandoned( $bitpay_invoice->getStatus(), $invoice_id, $order_id, $event->name );
 				break;
 			case 'invoice_refundComplete':
-				$this->process_refunded( $bitpay_invoice->getStatus(), $order_id, $event->name );
+				$this->process_refunded( $bitpay_invoice->getStatus(), $invoice_id, $order_id, $event->name );
 				break;
 		}
 	}
@@ -183,10 +183,16 @@ class BitPayIpnProcess {
 	}
 
 	private function process_refunded(
+		string $invoice_status,
 		string $invoice_id,
 		int $order_id,
 		string $event_name
 	): void {
+		// Only an invoice that was paid can be refunded.
+		if ( ! in_array( $invoice_status, array( 'paid', 'confirmed', 'complete' ), true ) ) {
+			return;
+		}
+
 		$note = 'BitPay Invoice ID: <a target = "_blank" href = "' . BitPayEndpoint::get_url(
 			$this->get_edd_options()['test_mode'],
 			$invoice_id
