@@ -4,7 +4,7 @@ Tags: bitcoin, bitcoin cash, payments, bitpay, cryptocurrency, payment gateway
 Requires at least: 3.1
 Tested up to: 6.2.2
 Requires PHP: 8.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: MIT License (MIT)
 License URI: https://github.com/bitpay/bitpay-checkout-easy-digital-downloads/blob/master/LICENSE
 
@@ -106,6 +106,11 @@ You can contact our support team via the following form https://bitpay.com/reque
 12. Wordpress Easy Digital Downloads - order view
 
 == Changelog ==
+
+= 2.0.1 =
+* Security: payment notifications now update only the order linked to the BitPay invoice
+* Fixed order completion check to use the correct BitPay invoice status
+* Refund notifications now require a paid invoice
 
 = 2.0.0 =
 * Rewrote plugin to use PHP 8.0 and EDD 3.1
