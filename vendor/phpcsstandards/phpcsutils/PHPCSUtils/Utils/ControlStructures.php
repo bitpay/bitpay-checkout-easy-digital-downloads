@@ -10,9 +10,11 @@
 
 namespace PHPCSUtils\Utils;
 
-use PHP_CodeSniffer\Exceptions\RuntimeException;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Util\Tokens;
+use PHPCSUtils\Exceptions\OutOfBoundsStackPtr;
+use PHPCSUtils\Exceptions\TypeError;
+use PHPCSUtils\Exceptions\UnexpectedTokenType;
 use PHPCSUtils\Tokens\Collections;
 
 /**
@@ -76,7 +78,7 @@ final class ControlStructures
 
             // Check whether the body is empty.
             $start = ($tokens[$stackPtr]['scope_opener'] + 1);
-            $end   = ($phpcsFile->numTokens + 1);
+            $end   = $phpcsFile->numTokens;
             if (isset($tokens[$stackPtr]['scope_closer']) === true) {
                 $end = $tokens[$stackPtr]['scope_closer'];
             }
@@ -199,7 +201,8 @@ final class ControlStructures
      * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
      * @param int                         $stackPtr  The position of the token we are checking.
      *
-     * @return array Array with information about the caught Exception(s).
+     * @return array<int, array<string, string|int>>
+     *               Array with information about the caught Exception(s).
      *               The returned array will contain the following information for
      *               each caught exception:
      *               ```php
@@ -211,23 +214,28 @@ final class ControlStructures
      *               ```
      *               In case of an invalid catch structure, the array may be empty.
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified `$stackPtr` is not of
-     *                                                      type `T_CATCH` or doesn't exist.
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If no parenthesis opener or closer can be
-     *                                                      determined (parse error).
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_CATCH` token.
      */
     public static function getCaughtExceptions(File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
 
-        if (isset($tokens[$stackPtr]) === false
-            || $tokens[$stackPtr]['code'] !== \T_CATCH
-        ) {
-            throw new RuntimeException('$stackPtr must be of type T_CATCH');
+        if (\is_int($stackPtr) === false) {
+            throw TypeError::create(2, '$stackPtr', 'integer', $stackPtr);
+        }
+
+        if (isset($tokens[$stackPtr]) === false) {
+            throw OutOfBoundsStackPtr::create(2, '$stackPtr', $stackPtr);
+        }
+
+        if ($tokens[$stackPtr]['code'] !== \T_CATCH) {
+            throw UnexpectedTokenType::create(2, '$stackPtr', 'T_CATCH', $tokens[$stackPtr]['type']);
         }
 
         if (isset($tokens[$stackPtr]['parenthesis_opener'], $tokens[$stackPtr]['parenthesis_closer']) === false) {
-            throw new RuntimeException('Parentheses opener/closer of the T_CATCH could not be determined');
+            return [];
         }
 
         $opener     = $tokens[$stackPtr]['parenthesis_opener'];

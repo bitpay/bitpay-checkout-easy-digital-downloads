@@ -5,7 +5,7 @@
  * @author    Ben Selby <benmatselby@gmail.com>
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/HEAD/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Reports;
@@ -28,7 +28,7 @@ class Hgblame extends VersionControl
      *
      * @param string $line Line to parse.
      *
-     * @return mixed string or false if impossible to recover.
+     * @return string|false String or FALSE if impossible to recover.
      */
     protected function getAuthor($line)
     {
@@ -89,7 +89,7 @@ class Hgblame extends VersionControl
             throw new DeepExitException($error, 3);
         }
 
-        $command = 'hg blame -u -d -v "'.$filename.'" 2>&1';
+        $command = 'hg blame -u -d -v '.escapeshellarg($filename).' 2>&1';
         $handle  = popen($command, 'r');
         if ($handle === false) {
             $error = 'ERROR: Could not execute "'.$command.'"'.PHP_EOL.PHP_EOL;

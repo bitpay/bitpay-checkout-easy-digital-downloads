@@ -29,7 +29,7 @@
  * @author    Klaus Purer <klaus.purer@protonmail.ch>
  *
  * @copyright 2006-2019 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/HEAD/licence.txt BSD Licence
  */
 
 namespace PHPCSUtils\BackCompat;
@@ -76,7 +76,8 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 0.0.5.
-     * - PHPCS 3.8.0: OO methods called `self`, `parent` or `static` are now correctly recognized.
+     * - PHPCS 4.0: The method no longer accepts `T_CLOSURE` and `T_ANON_CLASS` tokens.
+     * - PHPCS 4.0: The method will now always return a string.
      *
      * @see \PHP_CodeSniffer\Files\File::getDeclarationName() Original source.
      * @see \PHPCSUtils\Utils\ObjectDeclarations::getName()   PHPCSUtils native improved version.
@@ -88,22 +89,17 @@ final class BCFile
      *                                               which declared the class, interface,
      *                                               trait, enum or function.
      *
-     * @return string|null The name of the class, interface, trait, enum, or function;
-     *                     or `NULL` if the function or class is anonymous or
-     *                     in case of a parse error/live coding.
+     * @return string The name of the class, interface, trait, or function or an empty string
+     *                if the name could not be determined (live coding).
      *
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified token is not of type
-     *                                                      `T_FUNCTION`, `T_CLASS`, `T_ANON_CLASS`,
-     *                                                      `T_CLOSURE`, `T_TRAIT`, `T_ENUM` or `T_INTERFACE`.
+     *                                                      `T_FUNCTION`, `T_CLASS`, `T_TRAIT`, `T_ENUM`, or `T_INTERFACE`.
      */
     public static function getDeclarationName(File $phpcsFile, $stackPtr)
     {
-        $tokens    = $phpcsFile->getTokens();
-        $tokenCode = $tokens[$stackPtr]['code'];
+        $tokens = $phpcsFile->getTokens();
 
-        if ($tokenCode === T_ANON_CLASS || $tokenCode === T_CLOSURE) {
-            return null;
-        }
+        $tokenCode = $tokens[$stackPtr]['code'];
 
         if ($tokenCode !== T_FUNCTION
             && $tokenCode !== T_CLASS
@@ -122,14 +118,18 @@ final class BCFile
             return $tokens[$stackPtr]['content'];
         }
 
-        $content = null;
-        for ($i = ($stackPtr + 1); $i < $phpcsFile->numTokens; $i++) {
-            if ($tokens[$i]['code'] === T_STRING
-                // BC: PHPCS < 3.8.0.
-                || $tokens[$i]['code'] === T_SELF
-                || $tokens[$i]['code'] === T_PARENT
-                || $tokens[$i]['code'] === T_STATIC
-            ) {
+        $stopPoint = $phpcsFile->numTokens;
+        if (isset($tokens[$stackPtr]['parenthesis_opener']) === true) {
+            // For functions, stop searching at the parenthesis opener.
+            $stopPoint = $tokens[$stackPtr]['parenthesis_opener'];
+        } elseif (isset($tokens[$stackPtr]['scope_opener']) === true) {
+            // For OO tokens, stop searching at the open curly.
+            $stopPoint = $tokens[$stackPtr]['scope_opener'];
+        }
+
+        $content = '';
+        for ($i = $stackPtr; $i < $stopPoint; $i++) {
+            if ($tokens[$i]['code'] === T_STRING) {
                 $content = $tokens[$i]['content'];
                 break;
             }
@@ -161,7 +161,7 @@ final class BCFile
      *                                           // or FALSE if there is no type hint.
      *   'type_hint_end_token' => integer|false, // The stack pointer to the end of the type hint
      *                                           // or FALSE if there is no type hint.
-     *   'nullable_type'       => boolean,       // TRUE if the var type is preceded by the nullability
+     *   'nullable_type'       => boolean,       // TRUE if the param type is preceded by the nullability
      *                                           // operator.
      *   'comma_token'         => integer|false, // The stack pointer to the comma after the param
      *                                           // or FALSE if this is the last param.
@@ -178,11 +178,17 @@ final class BCFile
      * Parameters declared using PHP 8 constructor property promotion, have these additional array indexes:
      * ```php
      *   'property_visibility' => string,        // The property visibility as declared.
-     *   'visibility_token'    => integer,|false // The stack pointer to the visibility modifier token.
+     *   'visibility_token'    => integer|false, // The stack pointer to the visibility modifier token.
      *                                           // or FALSE if the visibility is not explicitly declared.
-     *   'property_readonly'   => bool,          // TRUE if the readonly keyword was found.
+     *   'property_readonly'   => boolean,       // TRUE if the readonly keyword was found.
      *   'readonly_token'      => integer,       // The stack pointer to the readonly modifier token.
      *                                           // This index will only be set if the property is readonly.
+     * ```
+     *
+     * ... and if the promoted property uses asymmetric visibility, these additional array indexes will also be available:
+     * ```php
+     *   'set_visibility'       => string,       // The property set-visibility as declared.
+     *   'set_visibility_token' => integer,      // The stack pointer to the set-visibility modifier token.
      * ```
      *
      * PHPCS cross-version compatible version of the `File::getMethodParameters()` method.
@@ -196,12 +202,13 @@ final class BCFile
      *
      * @since 1.0.0
      * @since 1.0.6 Sync with PHPCS 3.8.0, support for readonly properties without explicit visibility. PHPCS#3801.
+     * @since 1.1.0 Sync with PHPCS 3.13.1, support for asymmetric properties. PHPCS(new)#851
      *
      * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
      * @param int                         $stackPtr  The position in the stack of the function token
      *                                               to acquire the parameters for.
      *
-     * @return array
+     * @return array<int, array<string, mixed>>
      *
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified `$stackPtr` is not of
      *                                                      type `T_FUNCTION`, `T_CLOSURE`, `T_USE`,
@@ -242,30 +249,33 @@ final class BCFile
 
         $closer = $tokens[$opener]['parenthesis_closer'];
 
-        $vars             = [];
-        $currVar          = null;
-        $paramStart       = ($opener + 1);
-        $defaultStart     = null;
-        $equalToken       = null;
-        $paramCount       = 0;
-        $hasAttributes    = false;
-        $passByReference  = false;
-        $referenceToken   = false;
-        $variableLength   = false;
-        $variadicToken    = false;
-        $typeHint         = '';
-        $typeHintToken    = false;
-        $typeHintEndToken = false;
-        $nullableType     = false;
-        $visibilityToken  = null;
-        $readonlyToken    = null;
+        $vars               = [];
+        $currVar            = null;
+        $paramStart         = ($opener + 1);
+        $defaultStart       = null;
+        $equalToken         = null;
+        $paramCount         = 0;
+        $hasAttributes      = false;
+        $passByReference    = false;
+        $referenceToken     = false;
+        $variableLength     = false;
+        $variadicToken      = false;
+        $typeHint           = '';
+        $typeHintToken      = false;
+        $typeHintEndToken   = false;
+        $nullableType       = false;
+        $visibilityToken    = null;
+        $setVisibilityToken = null;
+        $readonlyToken      = null;
 
         for ($i = $paramStart; $i <= $closer; $i++) {
             // Check to see if this token has a parenthesis or bracket opener. If it does
             // it's likely to be an array which might have arguments in it. This
             // could cause problems in our parsing below, so lets just skip to the
             // end of it.
-            if (isset($tokens[$i]['parenthesis_opener']) === true) {
+            if ($tokens[$i]['code'] !== T_TYPE_OPEN_PARENTHESIS
+                && isset($tokens[$i]['parenthesis_opener']) === true
+            ) {
                 // Don't do this if it's the close parenthesis for the method.
                 if ($i !== $tokens[$i]['parenthesis_closer']) {
                     $i = ($tokens[$i]['parenthesis_closer'] + 1);
@@ -361,7 +371,10 @@ final class BCFile
                 case T_NS_SEPARATOR:
                 case T_TYPE_UNION:
                 case T_TYPE_INTERSECTION:
+                case T_TYPE_OPEN_PARENTHESIS:
+                case T_TYPE_CLOSE_PARENTHESIS:
                 case T_FALSE:
+                case T_TRUE:
                 case T_NULL:
                     // Part of a type hint or default value.
                     if ($defaultStart === null) {
@@ -385,6 +398,13 @@ final class BCFile
                 case T_PRIVATE:
                     if ($defaultStart === null) {
                         $visibilityToken = $i;
+                    }
+                    break;
+                case T_PUBLIC_SET:
+                case T_PROTECTED_SET:
+                case T_PRIVATE_SET:
+                    if ($defaultStart === null) {
+                        $setVisibilityToken = $i;
                     }
                     break;
                 case T_READONLY:
@@ -421,16 +441,21 @@ final class BCFile
                     $vars[$paramCount]['type_hint_end_token'] = $typeHintEndToken;
                     $vars[$paramCount]['nullable_type']       = $nullableType;
 
-                    if ($visibilityToken !== null || $readonlyToken !== null) {
+                    if ($visibilityToken !== null || $setVisibilityToken !== null || $readonlyToken !== null) {
                         $vars[$paramCount]['property_visibility'] = 'public';
                         $vars[$paramCount]['visibility_token']    = false;
-                        $vars[$paramCount]['property_readonly']   = false;
 
                         if ($visibilityToken !== null) {
                             $vars[$paramCount]['property_visibility'] = $tokens[$visibilityToken]['content'];
                             $vars[$paramCount]['visibility_token']    = $visibilityToken;
                         }
 
+                        if ($setVisibilityToken !== null) {
+                            $vars[$paramCount]['set_visibility']       = $tokens[$setVisibilityToken]['content'];
+                            $vars[$paramCount]['set_visibility_token'] = $setVisibilityToken;
+                        }
+
+                        $vars[$paramCount]['property_readonly'] = false;
                         if ($readonlyToken !== null) {
                             $vars[$paramCount]['property_readonly'] = true;
                             $vars[$paramCount]['readonly_token']    = $readonlyToken;
@@ -444,21 +469,22 @@ final class BCFile
                     }
 
                     // Reset the vars, as we are about to process the next parameter.
-                    $currVar          = null;
-                    $paramStart       = ($i + 1);
-                    $defaultStart     = null;
-                    $equalToken       = null;
-                    $hasAttributes    = false;
-                    $passByReference  = false;
-                    $referenceToken   = false;
-                    $variableLength   = false;
-                    $variadicToken    = false;
-                    $typeHint         = '';
-                    $typeHintToken    = false;
-                    $typeHintEndToken = false;
-                    $nullableType     = false;
-                    $visibilityToken  = null;
-                    $readonlyToken    = null;
+                    $currVar            = null;
+                    $paramStart         = ($i + 1);
+                    $defaultStart       = null;
+                    $equalToken         = null;
+                    $hasAttributes      = false;
+                    $passByReference    = false;
+                    $referenceToken     = false;
+                    $variableLength     = false;
+                    $variadicToken      = false;
+                    $typeHint           = '';
+                    $typeHintToken      = false;
+                    $typeHintEndToken   = false;
+                    $nullableType       = false;
+                    $visibilityToken    = null;
+                    $setVisibilityToken = null;
+                    $readonlyToken      = null;
 
                     ++$paramCount;
                     break;
@@ -498,7 +524,7 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 0.0.5.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::getMethodProperties()      Original source.
      * @see \PHPCSUtils\Utils\FunctionDeclarations::getProperties() PHPCSUtils native improved version.
@@ -509,7 +535,7 @@ final class BCFile
      * @param int                         $stackPtr  The position in the stack of the function token to
      *                                               acquire the properties for.
      *
-     * @return array
+     * @return array<string, mixed>
      *
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
      *                                                      `T_FUNCTION`, `T_CLOSURE`, or `T_FN` token.
@@ -527,8 +553,13 @@ final class BCFile
      * array(
      *   'scope'           => string,        // Public, private, or protected.
      *   'scope_specified' => boolean,       // TRUE if the scope was explicitly specified.
+     *   'set_scope'       => string|false,  // Scope for asymmetric visibility.
+     *                                       // Either public, private, or protected or
+     *                                       // FALSE if no set scope is specified.
      *   'is_static'       => boolean,       // TRUE if the static keyword was found.
      *   'is_readonly'     => boolean,       // TRUE if the readonly keyword was found.
+     *   'is_final'        => boolean,       // TRUE if the final keyword was found.
+     *   'is_abstract'     => boolean,       // TRUE if the abstract keyword was found.
      *   'type'            => string,        // The type of the var (empty if no type specified).
      *   'type_token'      => integer|false, // The stack pointer to the start of the type
      *                                       // or FALSE if there is no type.
@@ -543,18 +574,22 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 0.0.5.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - PHPCS 3.13.3: support for PHP 8.4 abstract properties.
+     * - PHPCS 4.0: properties in interfaces (PHP 8.4+) are accepted.
+     * - PHPCS 4.0: will no longer throw a parse error warning.
      *
      * @see \PHP_CodeSniffer\Files\File::getMemberProperties() Original source.
      * @see \PHPCSUtils\Utils\Variables::getMemberProperties() PHPCSUtils native improved version.
      *
      * @since 1.0.0
+     * @since 1.1.0 Sync with PHPCS 4.0.0, remove parse error warning and support PHP 8.4 properties in interfaces. PHPCS(new)#991
+     * @since 1.1.2 Sync with PHPCS 3.13.3, support for abstract properties. PHPCS(new)#1183
      *
      * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
      * @param int                         $stackPtr  The position in the stack of the `T_VARIABLE` token to
      *                                               acquire the properties for.
      *
-     * @return array
+     * @return array<string, mixed>
      *
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
      *                                                      `T_VARIABLE` token, or if the position is not
@@ -562,7 +597,156 @@ final class BCFile
      */
     public static function getMemberProperties(File $phpcsFile, $stackPtr)
     {
-        return $phpcsFile->getMemberProperties($stackPtr);
+        $tokens = $phpcsFile->getTokens();
+
+        if ($tokens[$stackPtr]['code'] !== T_VARIABLE) {
+            throw new RuntimeException('$stackPtr must be of type T_VARIABLE');
+        }
+
+        if (empty($tokens[$stackPtr]['conditions']) === true) {
+            throw new RuntimeException('$stackPtr is not a class member var');
+        }
+
+        $conditions = $tokens[$stackPtr]['conditions'];
+        $conditions = array_keys($conditions);
+        $ptr        = array_pop($conditions);
+        if (isset($tokens[$ptr]) === false
+            || isset(Tokens::$ooScopeTokens[$tokens[$ptr]['code']]) === false
+            || $tokens[$ptr]['code'] === T_ENUM
+        ) {
+            throw new RuntimeException('$stackPtr is not a class member var');
+        }
+
+        // Make sure it's not a method parameter.
+        if (empty($tokens[$stackPtr]['nested_parenthesis']) === false) {
+            $parenthesis = array_keys($tokens[$stackPtr]['nested_parenthesis']);
+            $deepestOpen = array_pop($parenthesis);
+            if ($deepestOpen > $ptr
+                && isset($tokens[$deepestOpen]['parenthesis_owner']) === true
+                && $tokens[$tokens[$deepestOpen]['parenthesis_owner']]['code'] === T_FUNCTION
+            ) {
+                throw new RuntimeException('$stackPtr is not a class member var');
+            }
+        }
+
+        $valid = [
+            T_STATIC   => T_STATIC,
+            T_VAR      => T_VAR,
+            T_READONLY => T_READONLY,
+            T_FINAL    => T_FINAL,
+            T_ABSTRACT => T_ABSTRACT,
+        ];
+
+        $valid += Tokens::$scopeModifiers;
+        $valid += Tokens::$emptyTokens;
+
+        $scope          = 'public';
+        $scopeSpecified = false;
+        $setScope       = false;
+        $isStatic       = false;
+        $isReadonly     = false;
+        $isFinal        = false;
+        $isAbstract     = false;
+
+        $startOfStatement = $phpcsFile->findPrevious(
+            [
+                T_SEMICOLON,
+                T_OPEN_CURLY_BRACKET,
+                T_CLOSE_CURLY_BRACKET,
+                T_ATTRIBUTE_END,
+            ],
+            ($stackPtr - 1)
+        );
+
+        for ($i = ($startOfStatement + 1); $i < $stackPtr; $i++) {
+            if (isset($valid[$tokens[$i]['code']]) === false) {
+                break;
+            }
+
+            switch ($tokens[$i]['code']) {
+                case T_PUBLIC:
+                    $scope          = 'public';
+                    $scopeSpecified = true;
+                    break;
+                case T_PRIVATE:
+                    $scope          = 'private';
+                    $scopeSpecified = true;
+                    break;
+                case T_PROTECTED:
+                    $scope          = 'protected';
+                    $scopeSpecified = true;
+                    break;
+                case T_PUBLIC_SET:
+                    $setScope = 'public';
+                    break;
+                case T_PROTECTED_SET:
+                    $setScope = 'protected';
+                    break;
+                case T_PRIVATE_SET:
+                    $setScope = 'private';
+                    break;
+                case T_STATIC:
+                    $isStatic = true;
+                    break;
+                case T_READONLY:
+                    $isReadonly = true;
+                    break;
+                case T_FINAL:
+                    $isFinal = true;
+                    break;
+                case T_ABSTRACT:
+                    $isAbstract = true;
+                    break;
+            }
+        }
+
+        $type         = '';
+        $typeToken    = false;
+        $typeEndToken = false;
+        $nullableType = false;
+
+        if ($i < $stackPtr) {
+            // We've found a type.
+            $valid = Collections::propertyTypeTokens();
+
+            for ($i; $i < $stackPtr; $i++) {
+                if ($tokens[$i]['code'] === T_VARIABLE) {
+                    // Hit another variable in a group definition.
+                    break;
+                }
+
+                if ($tokens[$i]['code'] === T_NULLABLE) {
+                    $nullableType = true;
+                }
+
+                if (isset($valid[$tokens[$i]['code']]) === true) {
+                    $typeEndToken = $i;
+                    if ($typeToken === false) {
+                        $typeToken = $i;
+                    }
+
+                    $type .= $tokens[$i]['content'];
+                }
+            }
+
+            if ($type !== '' && $nullableType === true) {
+                $type = '?' . $type;
+            }
+        }
+
+        return [
+            'scope'           => $scope,
+            'scope_specified' => $scopeSpecified,
+            'set_scope'       => $setScope,
+            'is_static'       => $isStatic,
+            'is_readonly'     => $isReadonly,
+            'is_final'        => $isFinal,
+            'is_abstract'     => $isAbstract,
+            'type'            => $type,
+            'type_token'      => $typeToken,
+            'type_end_token'  => $typeEndToken,
+            'nullable_type'   => $nullableType,
+        ];
     }
 
     /**
@@ -573,7 +757,7 @@ final class BCFile
      * array(
      *   'is_abstract' => boolean, // TRUE if the abstract keyword was found.
      *   'is_final'    => boolean, // TRUE if the final keyword was found.
-     *   'is_readonly' => false, // TRUE if the readonly keyword was found.
+     *   'is_readonly' => boolean, // TRUE if the readonly keyword was found.
      * );
      * ```
      *
@@ -581,69 +765,25 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 1.3.0.
-     * - PHPCS 3.8.0: Added support for PHP 8.2 `readonly` classes.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::getClassProperties()          Original source.
      * @see \PHPCSUtils\Utils\ObjectDeclarations::getClassProperties() PHPCSUtils native improved version.
      *
      * @since 1.0.0
-     * @since 1.0.6 Sync with PHPCS 3.8.0, support for readonly classes. PHPCS#3686.
      *
      * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
      * @param int                         $stackPtr  The position in the stack of the `T_CLASS`
      *                                               token to acquire the properties for.
      *
-     * @return array
+     * @return array<string, bool>
      *
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
      *                                                      `T_CLASS` token.
      */
     public static function getClassProperties(File $phpcsFile, $stackPtr)
     {
-        $tokens = $phpcsFile->getTokens();
-
-        if ($tokens[$stackPtr]['code'] !== T_CLASS) {
-            throw new RuntimeException('$stackPtr must be of type T_CLASS');
-        }
-
-        $valid = [
-            T_FINAL       => T_FINAL,
-            T_ABSTRACT    => T_ABSTRACT,
-            T_READONLY    => T_READONLY,
-            T_WHITESPACE  => T_WHITESPACE,
-            T_COMMENT     => T_COMMENT,
-            T_DOC_COMMENT => T_DOC_COMMENT,
-        ];
-
-        $isAbstract = false;
-        $isFinal    = false;
-        $isReadonly = false;
-
-        for ($i = ($stackPtr - 1); $i > 0; $i--) {
-            if (isset($valid[$tokens[$i]['code']]) === false) {
-                break;
-            }
-
-            switch ($tokens[$i]['code']) {
-                case T_ABSTRACT:
-                    $isAbstract = true;
-                    break;
-
-                case T_FINAL:
-                    $isFinal = true;
-                    break;
-
-                case T_READONLY:
-                    $isReadonly = true;
-                    break;
-            }
-        }
-
-        return [
-            'is_abstract' => $isAbstract,
-            'is_final'    => $isFinal,
-            'is_readonly' => $isReadonly,
-        ];
+        return $phpcsFile->getClassProperties($stackPtr);
     }
 
     /**
@@ -653,7 +793,7 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 0.0.5.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::isReference() Original source.
      * @see \PHPCSUtils\Utils\Operators::isReference() PHPCSUtils native improved version.
@@ -679,7 +819,7 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 0.0.5.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::getTokensAsString() Original source.
      * @see \PHPCSUtils\Utils\GetTokensAsString              Related set of functions.
@@ -708,15 +848,15 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 2.1.0.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::findStartOfStatement() Original source.
      *
      * @since 1.0.0
      *
-     * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
-     * @param int                         $start     The position to start searching from in the token stack.
-     * @param int|string|array            $ignore    Token types that should not be considered stop points.
+     * @param \PHP_CodeSniffer\Files\File  $phpcsFile The file being scanned.
+     * @param int                          $start     The position to start searching from in the token stack.
+     * @param int|string|array<int|string> $ignore    Token types that should not be considered stop points.
      *
      * @return int
      */
@@ -732,15 +872,15 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 2.1.0.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::findEndOfStatement() Original source.
      *
      * @since 1.0.0
      *
-     * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
-     * @param int                         $start     The position to start searching from in the token stack.
-     * @param int|string|array            $ignore    Token types that should not be considered stop points.
+     * @param \PHP_CodeSniffer\Files\File  $phpcsFile The file being scanned.
+     * @param int                          $start     The position to start searching from in the token stack.
+     * @param int|string|array<int|string> $ignore    Token types that should not be considered stop points.
      *
      * @return int
      */
@@ -756,16 +896,16 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 0.0.5.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::hasCondition()  Original source.
      * @see \PHPCSUtils\Utils\Conditions::hasCondition() PHPCSUtils native alternative.
      *
      * @since 1.0.0
      *
-     * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
-     * @param int                         $stackPtr  The position of the token we are checking.
-     * @param int|string|array            $types     The type(s) of tokens to search for.
+     * @param \PHP_CodeSniffer\Files\File  $phpcsFile The file being scanned.
+     * @param int                          $stackPtr  The position of the token we are checking.
+     * @param int|string|array<int|string> $types     The type(s) of tokens to search for.
      *
      * @return bool
      */
@@ -781,7 +921,7 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 1.3.0.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - The upstream method has received no significant updates since PHPCS 3.13.5.
      *
      * @see \PHP_CodeSniffer\Files\File::getCondition()  Original source.
      * @see \PHPCSUtils\Utils\Conditions::getCondition() More versatile alternative.
@@ -812,7 +952,7 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 1.2.0.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - PHPCS 4.0.0: Handling of the namespace relative parent class using the namespace keyword as operator.
      *
      * @see \PHP_CodeSniffer\Files\File::findExtendedClassName()          Original source.
      * @see \PHPCSUtils\Utils\ObjectDeclarations::findExtendedClassName() PHPCSUtils native improved version.
@@ -827,7 +967,42 @@ final class BCFile
      */
     public static function findExtendedClassName(File $phpcsFile, $stackPtr)
     {
-        return $phpcsFile->findExtendedClassName($stackPtr);
+        $tokens = $phpcsFile->getTokens();
+
+        // Check for the existence of the token.
+        if (isset($tokens[$stackPtr]) === false) {
+            return false;
+        }
+
+        if ($tokens[$stackPtr]['code'] !== T_CLASS
+            && $tokens[$stackPtr]['code'] !== T_ANON_CLASS
+            && $tokens[$stackPtr]['code'] !== T_INTERFACE
+        ) {
+            return false;
+        }
+
+        if (isset($tokens[$stackPtr]['scope_opener']) === false) {
+            return false;
+        }
+
+        $classOpenerIndex = $tokens[$stackPtr]['scope_opener'];
+        $extendsIndex     = $phpcsFile->findNext(T_EXTENDS, $stackPtr, $classOpenerIndex);
+        if ($extendsIndex === false) {
+            return false;
+        }
+
+        $find   = Collections::namespacedNameTokens();
+        $find[] = T_WHITESPACE;
+
+        $end  = $phpcsFile->findNext($find, ($extendsIndex + 1), ($classOpenerIndex + 1), true);
+        $name = $phpcsFile->getTokensAsString(($extendsIndex + 1), ($end - $extendsIndex - 1));
+        $name = trim($name);
+
+        if ($name === '') {
+            return false;
+        }
+
+        return $name;
     }
 
     /**
@@ -837,7 +1012,7 @@ final class BCFile
      *
      * Changelog for the PHPCS native function:
      * - Introduced in PHPCS 2.7.0.
-     * - The upstream method has received no significant updates since PHPCS 3.7.1.
+     * - PHPCS 4.0.0: Handling of the namespace relative parent class using the namespace keyword as operator.
      *
      * @see \PHP_CodeSniffer\Files\File::findImplementedInterfaceNames()          Original source.
      * @see \PHPCSUtils\Utils\ObjectDeclarations::findImplementedInterfaceNames() PHPCSUtils native improved version.
@@ -847,11 +1022,49 @@ final class BCFile
      * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
      * @param int                         $stackPtr  The stack position of the class or enum token.
      *
-     * @return array|false Array with names of the implemented interfaces or `FALSE` on
-     *                     error or if there are no implemented interface names.
+     * @return array<string>|false Array with names of the implemented interfaces or `FALSE` on
+     *                             error or if there are no implemented interface names.
      */
     public static function findImplementedInterfaceNames(File $phpcsFile, $stackPtr)
     {
-        return $phpcsFile->findImplementedInterfaceNames($stackPtr);
+        $tokens = $phpcsFile->getTokens();
+
+        // Check for the existence of the token.
+        if (isset($tokens[$stackPtr]) === false) {
+            return false;
+        }
+
+        if ($tokens[$stackPtr]['code'] !== T_CLASS
+            && $tokens[$stackPtr]['code'] !== T_ANON_CLASS
+            && $tokens[$stackPtr]['code'] !== T_ENUM
+        ) {
+            return false;
+        }
+
+        if (isset($tokens[$stackPtr]['scope_closer']) === false) {
+            return false;
+        }
+
+        $classOpenerIndex = $tokens[$stackPtr]['scope_opener'];
+        $implementsIndex  = $phpcsFile->findNext(T_IMPLEMENTS, $stackPtr, $classOpenerIndex);
+        if ($implementsIndex === false) {
+            return false;
+        }
+
+        $find   = Collections::namespacedNameTokens();
+        $find[] = T_WHITESPACE;
+        $find[] = T_COMMA;
+
+        $end  = $phpcsFile->findNext($find, ($implementsIndex + 1), ($classOpenerIndex + 1), true);
+        $name = $phpcsFile->getTokensAsString(($implementsIndex + 1), ($end - $implementsIndex - 1));
+        $name = trim($name);
+
+        if ($name === '') {
+            return false;
+        } else {
+            $names = explode(',', $name);
+            $names = array_map('trim', $names);
+            return $names;
+        }
     }
 }

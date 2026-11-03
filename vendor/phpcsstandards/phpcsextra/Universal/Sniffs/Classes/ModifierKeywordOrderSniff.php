@@ -69,7 +69,7 @@ final class ModifierKeywordOrderSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
@@ -119,8 +119,6 @@ final class ModifierKeywordOrderSniff implements Sniff
         } else {
             $phpcsFile->recordMetric($stackPtr, self::METRIC_NAME, self::EXTEND_READONLY);
         }
-
-        $message = 'Class modifier keywords are not in the correct order. Expected: "%s", found: "%s"';
 
         switch ($this->order) {
             case self::READONLY_EXTEND:

@@ -11,8 +11,8 @@
 namespace PHPCSUtils\BackCompat;
 
 use PHP_CodeSniffer\Config;
-use PHP_CodeSniffer\Exceptions\RuntimeException;
 use PHP_CodeSniffer\Files\File;
+use PHPCSUtils\Exceptions\MissingArgumentError;
 
 /**
  * Utility methods to retrieve (configuration) information from PHP_CodeSniffer.
@@ -52,7 +52,7 @@ final class Helper
      * @since 1.0.0
      *
      * @param string                  $key    The name of the config value.
-     * @param string|null             $value  The value to set. If `null`, the config entry
+     * @param mixed                   $value  The value to set. If `null`, the config entry
      *                                        is deleted, reverting it to the default value.
      * @param bool                    $temp   Set this config data temporarily for this script run.
      *                                        This will not write the config data to the config file.
@@ -63,6 +63,8 @@ final class Helper
      *                                        in PHPCS 3.x and higher.
      *
      * @return bool Whether the setting of the data was successfull.
+     *
+     * @throws \PHPCSUtils\Exceptions\MissingArgumentError When using PHPCS 4.x and not passing the $config parameter.
      */
     public static function setConfigData($key, $value, $temp = false, $config = null)
     {
@@ -72,7 +74,7 @@ final class Helper
         }
 
         if (\version_compare(self::getVersion(), '3.99.99', '>') === true) {
-            throw new RuntimeException('Passing the $config parameter is required in PHPCS 4.x');
+            throw MissingArgumentError::create(4, '$config', 'when running on PHPCS 4.x');
         }
 
         // PHPCS 3.x.
@@ -143,13 +145,14 @@ final class Helper
      * command-line or the ruleset.
      *
      * @since 1.0.0
+     * @since 1.0.10 The `File` type declaration has been removed from the parameter declaration.
      *
      * @param \PHP_CodeSniffer\Files\File|null $phpcsFile Optional. The current file being processed.
      *
      * @return string Encoding. Defaults to the PHPCS native default, which is 'utf-8'
      *                for PHPCS 3.x.
      */
-    public static function getEncoding(File $phpcsFile = null)
+    public static function getEncoding($phpcsFile = null)
     {
         $default = 'utf-8';
 
@@ -176,14 +179,18 @@ final class Helper
      * Check whether the "--ignore-annotations" option is in effect.
      *
      * @since 1.0.0
+     * @since 1.0.10 The `File` type declaration has been removed from the parameter declaration.
      *
      * @param \PHP_CodeSniffer\Files\File|null $phpcsFile Optional. The current file being processed.
      *
      * @return bool `TRUE` if annotations should be ignored, `FALSE` otherwise.
      */
-    public static function ignoreAnnotations(File $phpcsFile = null)
+    public static function ignoreAnnotations($phpcsFile = null)
     {
-        if (isset($phpcsFile, $phpcsFile->config->annotations)) {
+        if (isset($phpcsFile)
+            && $phpcsFile instanceof File
+            && isset($phpcsFile->config->annotations)
+        ) {
             return ! $phpcsFile->config->annotations;
         }
 

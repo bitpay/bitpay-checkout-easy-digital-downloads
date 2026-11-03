@@ -10,9 +10,13 @@
 
 namespace PHPCSUtils\Utils;
 
-use PHP_CodeSniffer\Exceptions\RuntimeException;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Util\Tokens;
+use PHPCSUtils\Exceptions\OutOfBoundsStackPtr;
+use PHPCSUtils\Exceptions\TypeError;
+use PHPCSUtils\Exceptions\UnexpectedTokenType;
+use PHPCSUtils\Exceptions\ValueError;
+use PHPCSUtils\Internal\AttributeHelper;
 use PHPCSUtils\Internal\Cache;
 use PHPCSUtils\Tokens\Collections;
 use PHPCSUtils\Utils\Scopes;
@@ -41,7 +45,7 @@ final class Variables
      *
      * @since 1.0.0
      *
-     * @var array <string> => <bool>
+     * @var array<string, bool>
      */
     public static $phpReservedVars = [
         '_SERVER'              => true,
@@ -77,12 +81,11 @@ final class Variables
      * Retrieve the visibility and implementation properties of a class member variable.
      *
      * Main differences with the PHPCS version:
-     * - Removed the parse error warning for properties in interfaces.
+     * - Removed the parse error warning for properties in enums (PHPCS 4.0 makes the same change).
      *   This will now throw the same _"$stackPtr is not a class member var"_ runtime exception as
      *   other non-property variables passed to the method.
      * - Defensive coding against incorrect calls to this method.
      * - Support PHP 8.0 identifier name tokens in property types, cross-version PHP & PHPCS.
-     * - Support for the PHP 8.2 `true` type.
      * - The results of this function call are cached during a PHPCS run for faster response times.
      *
      * @see \PHP_CodeSniffer\Files\File::getMemberProperties()   Original source.
@@ -94,14 +97,19 @@ final class Variables
      * @param int                         $stackPtr  The position in the stack of the `T_VARIABLE` token
      *                                               to acquire the properties for.
      *
-     * @return array Array with information about the class member variable.
+     * @return array<string, mixed> Array with information about the class member variable.
      *               The format of the return value is:
      *               ```php
      *               array(
      *                 'scope'           => string,        // Public, private, or protected.
      *                 'scope_specified' => boolean,       // TRUE if the scope was explicitly specified.
+     *                 'set_scope'       => string|false,  // Scope for asymmetric visibility.
+     *                                                     // Either public, private, or protected or
+     *                                                     // FALSE if no set scope is specified.
      *                 'is_static'       => boolean,       // TRUE if the static keyword was found.
      *                 'is_readonly'     => boolean,       // TRUE if the readonly keyword was found.
+     *                 'is_final'        => boolean,       // TRUE if the final keyword was found.
+     *                 'is_abstract'     => boolean,       // TRUE if the abstract keyword was found.
      *                 'type'            => string,        // The type of the var (empty if no type specified).
      *                 'type_token'      => integer|false, // The stack pointer to the start of the type
      *                                                     // or FALSE if there is no type.
@@ -112,21 +120,29 @@ final class Variables
      *               );
      *               ```
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      `T_VARIABLE` token.
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      class member variable.
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_VARIABLE` token.
+     * @throws \PHPCSUtils\Exceptions\ValueError          If the specified position is not a class member variable.
      */
     public static function getMemberProperties(File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
 
-        if (isset($tokens[$stackPtr]) === false || $tokens[$stackPtr]['code'] !== \T_VARIABLE) {
-            throw new RuntimeException('$stackPtr must be of type T_VARIABLE');
+        if (\is_int($stackPtr) === false) {
+            throw TypeError::create(2, '$stackPtr', 'integer', $stackPtr);
+        }
+
+        if (isset($tokens[$stackPtr]) === false) {
+            throw OutOfBoundsStackPtr::create(2, '$stackPtr', $stackPtr);
+        }
+
+        if ($tokens[$stackPtr]['code'] !== \T_VARIABLE) {
+            throw UnexpectedTokenType::create(2, '$stackPtr', 'T_VARIABLE', $tokens[$stackPtr]['type']);
         }
 
         if (Scopes::isOOProperty($phpcsFile, $stackPtr) === false) {
-            throw new RuntimeException('$stackPtr is not a class member var');
+            throw ValueError::create(2, '$stackPtr', 'must be the pointer to a class member var');
         }
 
         if (Cache::isCached($phpcsFile, __METHOD__, $stackPtr) === true) {
@@ -137,8 +153,11 @@ final class Variables
 
         $scope          = 'public';
         $scopeSpecified = false;
+        $setScope       = false;
         $isStatic       = false;
         $isReadonly     = false;
+        $isFinal        = false;
+        $isAbstract     = false;
 
         $startOfStatement = $phpcsFile->findPrevious(
             [
@@ -168,11 +187,35 @@ final class Variables
                     $scope          = 'protected';
                     $scopeSpecified = true;
                     break;
+                case \T_PUBLIC_SET:
+                    $setScope = 'public';
+                    if ($scopeSpecified === false) {
+                        $scope = 'public';
+                    }
+                    break;
+                case \T_PROTECTED_SET:
+                    $setScope = 'protected';
+                    if ($scopeSpecified === false) {
+                        $scope = 'public';
+                    }
+                    break;
+                case \T_PRIVATE_SET:
+                    $setScope = 'private';
+                    if ($scopeSpecified === false) {
+                        $scope = 'public';
+                    }
+                    break;
                 case \T_STATIC:
                     $isStatic = true;
                     break;
                 case \T_READONLY:
                     $isReadonly = true;
+                    break;
+                case \T_FINAL:
+                    $isFinal = true;
+                    break;
+                case \T_ABSTRACT:
+                    $isAbstract = true;
                     break;
             }
         }
@@ -182,12 +225,6 @@ final class Variables
         $typeEndToken       = false;
         $nullableType       = false;
         $propertyTypeTokens = Collections::propertyTypeTokens();
-
-        /*
-         * BC PHPCS < 3.x.x: The union type separator is not (yet) retokenized correctly
-         * for union types containing the `true` type.
-         */
-        $propertyTypeTokens[\T_BITWISE_OR] = \T_BITWISE_OR;
 
         if ($i < $stackPtr) {
             // We've found a type.
@@ -219,8 +256,11 @@ final class Variables
         $returnValue = [
             'scope'           => $scope,
             'scope_specified' => $scopeSpecified,
+            'set_scope'       => $setScope,
             'is_static'       => $isStatic,
             'is_readonly'     => $isReadonly,
+            'is_final'        => $isFinal,
+            'is_abstract'     => $isAbstract,
             'type'            => $type,
             'type_token'      => $typeToken,
             'type_end_token'  => $typeEndToken,
@@ -229,6 +269,31 @@ final class Variables
 
         Cache::set($phpcsFile, __METHOD__, $stackPtr, $returnValue);
         return $returnValue;
+    }
+
+    /**
+     * Retrieve the stack pointers to the attribute openers for any attribute block which applies to an OO property
+     * or function declaration parameters.
+     *
+     * @since 1.2.0
+     *
+     * @param \PHP_CodeSniffer\Files\File $phpcsFile The file being scanned.
+     * @param int                         $stackPtr  The position in the stack of the variable token to
+     *                                               acquire the attributes for.
+     *
+     * @return array<int> Array with the stack pointers to the applicable attribute openers
+     *                    or an empty array if there are no attributes attached to the OO property
+     *                    or function declaration parameter.
+     *
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_VARIABLE` token.
+     * @throws \PHPCSUtils\Exceptions\ValueError          If the token passed does not point to an OO property token
+     *                                                    or a parameter in a function declaration.
+     */
+    public static function getAttributeOpeners(File $phpcsFile, $stackPtr)
+    {
+        return AttributeHelper::getOpeners($phpcsFile, $stackPtr, 'variable');
     }
 
     /**

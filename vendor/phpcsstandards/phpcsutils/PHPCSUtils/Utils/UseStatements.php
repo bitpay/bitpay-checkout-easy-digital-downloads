@@ -10,9 +10,12 @@
 
 namespace PHPCSUtils\Utils;
 
-use PHP_CodeSniffer\Exceptions\RuntimeException;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Util\Tokens;
+use PHPCSUtils\Exceptions\OutOfBoundsStackPtr;
+use PHPCSUtils\Exceptions\TypeError;
+use PHPCSUtils\Exceptions\UnexpectedTokenType;
+use PHPCSUtils\Exceptions\ValueError;
 use PHPCSUtils\Internal\Cache;
 use PHPCSUtils\Utils\Conditions;
 use PHPCSUtils\Utils\Parentheses;
@@ -39,23 +42,24 @@ final class UseStatements
      *                the `T_USE` token is used for. An empty string being returned will
      *                normally mean the code being examined contains a parse error.
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      `T_USE` token.
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_USE` token.
      */
     public static function getType(File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
 
-        if (isset($tokens[$stackPtr]) === false
-            || $tokens[$stackPtr]['code'] !== \T_USE
-        ) {
-            throw new RuntimeException('$stackPtr must be of type T_USE');
+        if (\is_int($stackPtr) === false) {
+            throw TypeError::create(2, '$stackPtr', 'integer', $stackPtr);
         }
 
-        $next = $phpcsFile->findNext(Tokens::$emptyTokens, ($stackPtr + 1), null, true);
-        if ($next === false) {
-            // Live coding or parse error.
-            return '';
+        if (isset($tokens[$stackPtr]) === false) {
+            throw OutOfBoundsStackPtr::create(2, '$stackPtr', $stackPtr);
+        }
+
+        if ($tokens[$stackPtr]['code'] !== \T_USE) {
+            throw UnexpectedTokenType::create(2, '$stackPtr', 'T_USE', $tokens[$stackPtr]['type']);
         }
 
         // More efficient & simpler check for closure use in PHPCS 4.x.
@@ -67,9 +71,16 @@ final class UseStatements
 
         $prev = $phpcsFile->findPrevious(Tokens::$emptyTokens, ($stackPtr - 1), null, true);
         if ($prev !== false && $tokens[$prev]['code'] === \T_CLOSE_PARENTHESIS
-            && Parentheses::isOwnerIn($phpcsFile, $prev, \T_CLOSURE) === true
+            // T_FUNCTION is included to handle certain parse errors, which are still clearly closure use, correctly.
+            && Parentheses::isOwnerIn($phpcsFile, $prev, [\T_CLOSURE, \T_FUNCTION]) === true
         ) {
             return 'closure';
+        }
+
+        $next = $phpcsFile->findNext(Tokens::$emptyTokens, ($stackPtr + 1), null, true);
+        if ($next === false) {
+            // Live coding or parse error.
+            return '';
         }
 
         $lastCondition = Conditions::getLastCondition($phpcsFile, $stackPtr);
@@ -100,8 +111,9 @@ final class UseStatements
      * @return bool `TRUE` if the token passed is a closure use statement.
      *              `FALSE` if it's not.
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      `T_USE` token.
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_USE` token.
      */
     public static function isClosureUse(File $phpcsFile, $stackPtr)
     {
@@ -119,8 +131,9 @@ final class UseStatements
      * @return bool `TRUE` if the token passed is an import use statement.
      *              `FALSE` if it's not.
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      `T_USE` token.
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_USE` token.
      */
     public static function isImportUse(File $phpcsFile, $stackPtr)
     {
@@ -138,8 +151,9 @@ final class UseStatements
      * @return bool `TRUE` if the token passed is a trait use statement.
      *              `FALSE` if it's not.
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      `T_USE` token.
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_USE` token.
      */
     public static function isTraitUse(File $phpcsFile, $stackPtr)
     {
@@ -156,7 +170,8 @@ final class UseStatements
      * @param \PHP_CodeSniffer\Files\File $phpcsFile The file where this token was found.
      * @param int                         $stackPtr  The position in the stack of the `T_USE` token.
      *
-     * @return array A multi-level array containing information about the use statement.
+     * @return array<string, array<string, string>>
+     *               A multi-level array containing information about the use statement.
      *               The first level is `'name'`, `'function'` and `'const'`. These keys will always exist.
      *               If any statements are found for any of these categories, the second level
      *               will contain the alias/name as the key and the full original use name as the
@@ -182,21 +197,17 @@ final class UseStatements
      *               )
      *               ```
      *
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the specified position is not a
-     *                                                      `T_USE` token.
-     * @throws \PHP_CodeSniffer\Exceptions\RuntimeException If the `T_USE` token is not for an import
-     *                                                      use statement.
+     * @throws \PHPCSUtils\Exceptions\TypeError           If the $stackPtr parameter is not an integer.
+     * @throws \PHPCSUtils\Exceptions\OutOfBoundsStackPtr If the token passed does not exist in the $phpcsFile.
+     * @throws \PHPCSUtils\Exceptions\UnexpectedTokenType If the token passed is not a `T_USE` token.
+     * @throws \PHPCSUtils\Exceptions\ValueError          If the `T_USE` token is not for an import use statement.
      */
     public static function splitImportUseStatement(File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
 
-        if (isset($tokens[$stackPtr]) === false || $tokens[$stackPtr]['code'] !== \T_USE) {
-            throw new RuntimeException('$stackPtr must be of type T_USE');
-        }
-
         if (self::isImportUse($phpcsFile, $stackPtr) === false) {
-            throw new RuntimeException('$stackPtr must be an import use statement');
+            throw ValueError::create(2, '$stackPtr', 'must be the pointer to an import use statement');
         }
 
         if (Cache::isCached($phpcsFile, __METHOD__, $stackPtr) === true) {
@@ -300,9 +311,9 @@ final class UseStatements
                 case \T_COMMA:
                     if ($name !== '') {
                         if ($useGroup === true) {
-                            $statements[$type][$alias] = $baseName . $name;
+                            $statements[$type][$alias] = \ltrim($baseName, '\\') . $name;
                         } else {
-                            $statements[$type][$alias] = $name;
+                            $statements[$type][$alias] = \ltrim($name, '\\');
                         }
                     }
 
@@ -358,16 +369,18 @@ final class UseStatements
      *
      * @since 1.0.0
      *
-     * @param \PHP_CodeSniffer\Files\File $phpcsFile             The file where this token was found.
-     * @param int                         $stackPtr              The position in the stack of the `T_USE` token.
-     * @param array                       $previousUseStatements The import `use` statements collected so far.
-     *                                                           This should be either the output of a
-     *                                                           previous call to this method or the output of
-     *                                                           an earlier call to the
-     *                                                           {@see UseStatements::splitImportUseStatement()}
-     *                                                           method.
+     * @param \PHP_CodeSniffer\Files\File          $phpcsFile             The file where this token was found.
+     * @param int                                  $stackPtr              The position in the stack of the
+     *                                                                    `T_USE` token.
+     * @param array<string, array<string, string>> $previousUseStatements The import `use` statements collected so far.
+     *                                                                    This should be either the output of a
+     *                                                                    previous call to this method or the output of
+     *                                                                    an earlier call to the
+     *                                                                    {@see UseStatements::splitImportUseStatement()}
+     *                                                                    method.
      *
-     * @return array A multi-level array containing information about the current `use` statement combined with
+     * @return array<string, array<string, string>>
+     *               A multi-level array containing information about the current `use` statement combined with
      *               the previously collected `use` statement information.
      *               See {@see UseStatements::splitImportUseStatement()} for more details about the array format.
      */
@@ -376,7 +389,7 @@ final class UseStatements
         try {
             $useStatements         = self::splitImportUseStatement($phpcsFile, $stackPtr);
             $previousUseStatements = self::mergeImportUseStatements($previousUseStatements, $useStatements);
-        } catch (RuntimeException $e) {
+        } catch (ValueError $e) {
             // Not an import use statement.
         }
 
@@ -393,19 +406,20 @@ final class UseStatements
      *
      * @since 1.0.0
      *
-     * @param array $previousUseStatements The import `use` statements collected so far.
-     *                                     This should be either the output of a
-     *                                     previous call to this method or the output of
-     *                                     an earlier call to the
-     *                                     {@see UseStatements::splitImportUseStatement()}
-     *                                     method.
-     * @param array $currentUseStatement   The parsed import `use` statements to merge with
-     *                                     the previously collected use statements.
-     *                                     This should be the output of a call to the
-     *                                     {@see UseStatements::splitImportUseStatement()}
-     *                                     method.
+     * @param array<string, array<string, string>> $previousUseStatements The import `use` statements collected so far.
+     *                                                                    This should be either the output of a
+     *                                                                    previous call to this method or the output of
+     *                                                                    an earlier call to the
+     *                                                                    {@see UseStatements::splitImportUseStatement()}
+     *                                                                    method.
+     * @param array<string, array<string, string>> $currentUseStatement   The parsed import `use` statements to merge with
+     *                                                                    the previously collected use statements.
+     *                                                                    This should be the output of a call to the
+     *                                                                    {@see UseStatements::splitImportUseStatement()}
+     *                                                                    method.
      *
-     * @return array A multi-level array containing information about the current `use` statement combined with
+     * @return array<string, array<string, string>>
+     *               A multi-level array containing information about the current `use` statement combined with
      *               the previously collected `use` statement information.
      *               See {@see UseStatements::splitImportUseStatement()} for more details about the array format.
      */
