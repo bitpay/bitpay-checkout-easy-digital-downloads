@@ -31,8 +31,8 @@ class FulfilledPromise implements PromiseInterface
     }
 
     public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null
     ): PromiseInterface {
         // Return itself if there is no onFulfilled function.
         if (!$onFulfilled) {
@@ -43,7 +43,7 @@ class FulfilledPromise implements PromiseInterface
         $p = new Promise([$queue, 'run']);
         $value = $this->value;
         $queue->add(static function () use ($p, $value, $onFulfilled): void {
-            if (Is::pending($p)) {
+            if (State::isPending($p)) {
                 try {
                     $p->resolve($onFulfilled($value));
                 } catch (\Throwable $e) {

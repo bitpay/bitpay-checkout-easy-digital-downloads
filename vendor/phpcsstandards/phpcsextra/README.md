@@ -1,21 +1,21 @@
-PHPCSExtra
-=====================================================
+# PHPCSExtra
 
 <div aria-hidden="true">
 
-[![Latest Stable Version](https://poser.pugx.org/phpcsstandards/phpcsextra/v/stable)][phpcsextra-packagist]
+[![Latest Stable Version](https://img.shields.io/packagist/v/phpcsstandards/phpcsextra?label=stable)][phpcsextra-packagist]
 [![Release Date of the Latest Version](https://img.shields.io/github/release-date/PHPCSStandards/PHPCSExtra.svg?maxAge=1800)](https://github.com/PHPCSStandards/PHPCSExtra/releases)
 :construction:
 [![Latest Unstable Version](https://img.shields.io/badge/unstable-dev--develop-e68718.svg?maxAge=2419200)](https://packagist.org/packages/phpcsstandards/phpcsextra#dev-develop)
 [![Last Commit to Unstable](https://img.shields.io/github/last-commit/PHPCSStandards/PHPCSExtra/develop.svg)](https://github.com/PHPCSStandards/PHPCSExtra/commits/develop)
 
-[![Minimum PHP Version](https://img.shields.io/packagist/php-v/phpcsstandards/phpcsextra.svg?maxAge=3600)][phpcsextra-packagist]
 [![CS Build Status](https://github.com/PHPCSStandards/PHPCSExtra/actions/workflows/basics.yml/badge.svg?branch=develop)][gha-qa-results]
 [![Test Build Status](https://github.com/PHPCSStandards/PHPCSExtra/actions/workflows/test.yml/badge.svg?branch=develop)][gha-test-results]
-[![Tested on PHP 5.4 to 8.2](https://img.shields.io/badge/tested%20on-PHP%205.4%20|%205.5%20|%205.6%20|%207.0%20|%207.1%20|%207.2%20|%207.3%20|%207.4%20|%208.0%20|%208.1%20|%208.2-brightgreen.svg?maxAge=2419200)][gha-test-results]
 [![Coverage Status](https://coveralls.io/repos/github/PHPCSStandards/PHPCSExtra/badge.svg)](https://coveralls.io/github/PHPCSStandards/PHPCSExtra)
 
-[![License: LGPLv3](https://poser.pugx.org/phpcsstandards/phpcsextra/license)](https://github.com/PHPCSStandards/PHPCSExtra/blob/stable/LICENSE)
+[![Minimum PHP Version](https://img.shields.io/packagist/dependency-v/phpcsstandards/phpcsextra/php.svg)][phpcsextra-packagist]
+[![Tested on PHP 5.4 to 8.5](https://img.shields.io/badge/tested%20on-PHP%205.4%20|%205.5%20|%205.6%20|%207.0%20|%207.1%20|%207.2%20|%207.3%20|%207.4%20|%208.0%20|%208.1%20|%208.2%20|%208.3%20|%208.4%20|%208.5-brightgreen.svg?maxAge=2419200)][gha-test-results]
+
+[![License: LGPLv3](https://img.shields.io/github/license/PHPCSStandards/PHPCSExtra)](https://github.com/PHPCSStandards/PHPCSExtra/blob/stable/LICENSE)
 ![Awesome](https://img.shields.io/badge/awesome%3F-yes!-brightgreen.svg)
 
 </div>
@@ -23,45 +23,42 @@ PHPCSExtra
 * [Introduction](#introduction)
 * [Minimum Requirements](#minimum-requirements)
 * [Installation](#installation)
-    + [Composer Project-based Installation](#composer-project-based-installation)
-    + [Composer Global Installation](#composer-global-installation)
-    + [Updating to a newer version](#updating-to-a-newer-version)
+    - [Composer Project-based Installation](#composer-project-based-installation)
+    - [Composer Global Installation](#composer-global-installation)
+    - [Updating to a newer version](#updating-to-a-newer-version)
 * [Features](#features)
 * [Sniffs](#sniffs)
-    + [Modernize](#modernize)
-    + [NormalizedArrays](#normalizedarrays)
-    + [Universal](#universal)
+    - [Modernize](#modernize)
+    - [NormalizedArrays](#normalizedarrays)
+    - [Universal](#universal)
 * [Contributing](#contributing)
 * [License](#license)
 
 
-Introduction
--------------------------------------------
+## Introduction
 
 PHPCSExtra is a collection of sniffs and standards for use with [PHP_CodeSniffer][phpcs-gh].
 
 
-Minimum Requirements
--------------------------------------------
+## Minimum Requirements
 
 * PHP 5.4 or higher.
-* [PHP_CodeSniffer][phpcs-gh] version **3.7.1** or higher.
-* [PHPCSUtils][phpcsutils-gh] version **1.0.8** or higher.
+* [PHP_CodeSniffer][phpcs-gh] version **3.13.5**/**4.0.1** or higher.
+* [PHPCSUtils][phpcsutils-gh] version **1.2.0** or higher.
 
 
-Installation
--------------------------------------------
+## Installation
 
 Installing via Composer is highly recommended.
 
-[Composer](http://getcomposer.org/) will automatically install the project dependencies and register the rulesets from PHPCSExtra and other external standards with PHP_CodeSniffer using the [Composer PHPCS plugin][composer-installer-gh].
+[Composer](https://getcomposer.org/) will automatically install the project dependencies and register the rulesets from PHPCSExtra and other external standards with PHP_CodeSniffer using the [Composer PHPCS plugin][composer-installer-gh].
 
 ### Composer Project-based Installation
 
 Run the following from the root of your project:
 ```bash
 composer config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
-composer require --dev phpcsstandards/phpcsextra:"^1.1.0"
+composer require --dev phpcsstandards/phpcsextra:"^1.3.0"
 ```
 
 ### Composer Global Installation
@@ -69,7 +66,7 @@ composer require --dev phpcsstandards/phpcsextra:"^1.1.0"
 Alternatively, you may want to install this standard globally:
 ```bash
 composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
-composer global require --dev phpcsstandards/phpcsextra:"^1.1.0"
+composer global require --dev phpcsstandards/phpcsextra:"^1.3.0"
 ```
 
 ### Updating to a newer version
@@ -92,27 +89,25 @@ composer global update phpcsstandards/phpcsextra --with-dependencies
 > (and potential other external PHPCS standards you use), manage the version requirements for these packages.
 
 
-Features
--------------------------------------------
+## Features
 
 Once this project is installed, you will see three new rulesets in the list of installed standards when you run `vendor/bin/phpcs -i`: `Modernize`, `NormalizedArrays` and `Universal`.
 
-* The `Modernize` ruleset is a standard which checks code for modernization opportunaties.
+* The `Modernize` ruleset is a standard which checks code for modernization opportunities.
 * The `NormalizedArrays` ruleset is a standard to check the formatting of array declarations.
 * The `Universal` ruleset is **NOT** a standard, but a sniff collection.
     It should **NOT** be included in custom rulesets as a standard as it contains contradictory rules.
     Instead include individual sniffs from this standard in a custom project/company ruleset to use them.
 
 
-Sniffs
--------------------------------------------
+## Sniffs
 
 **Legend**:
 * :wrench: = Includes auto-fixer.
     _Use the `phpcbf` command to run the fixers._
 * :bar_chart: = Includes metrics.
     _Use `phpcs` with `--report=info` to see the metrics._
-* :books: = Includes CLI documentation.
+* :books: = Includes documentation.
     _Use `phpcs` with `--generator=Text` to see the documentation._
 
 
@@ -126,6 +121,9 @@ This sniff will detect and auto-fix two typical code modernizations which can be
 2. Since PHP 7.0, nested function calls to `dirname()` can be changed to use the `$levels` parameter.
     Errorcode: `Modernize.FunctionCalls.Dirname.Nested`.
 
+If a [`php_version` configuration option][php_version-config] has been passed to PHPCS using either `--config-set` or `--runtime-set`, it will be respected by the sniff.
+In effect, this means that the sniff will only report on modernizations which can be applied for the PHP version as configured.
+
 
 ### NormalizedArrays
 
@@ -134,13 +132,13 @@ This sniff will detect and auto-fix two typical code modernizations which can be
 Enforce consistent spacing for the open/close braces of array declarations.
 
 The sniff allows for having different settings for:
-- Space between the array keyword and the open parenthesis for long arrays via the `keywordSpacing` property.
+* Space between the array keyword and the open parenthesis for long arrays via the `keywordSpacing` property.
     Accepted values: (int) number of spaces or `false` to turn this check off. Defaults to `0` spaces.
-- Spaces on the inside of the braces for empty arrays via the `spacesWhenEmpty` property.
+* Spaces on the inside of the braces for empty arrays via the `spacesWhenEmpty` property.
     Accepted values: (string) `newline`, (int) number of spaces or `false` to turn this check off. Defaults to `0` spaces.
-- Spaces on the inside of the braces for single-line arrays via the `spacesSingleLine` property;
+* Spaces on the inside of the braces for single-line arrays via the `spacesSingleLine` property;
     Accepted values: (int) number of spaces or `false` to turn this check off. Defaults to `0` spaces.
-- Spaces on the inside of the braces for multi-line arrays via the `spacesMultiLine` property.
+* Spaces on the inside of the braces for multi-line arrays via the `spacesMultiLine` property.
     Accepted values: (string) `newline`, (int) number of spaces or `false` to turn this check off. Defaults to `newline`.
 
 Note: if any of the above properties are set to `newline`, it is recommended to also include an array indentation sniff. This sniff will not handle the indentation.
@@ -186,6 +184,29 @@ Best practice sniff: don't use a mix of integer and string keys for array items.
 
 Best practice sniff: don't use a mix of keyed and unkeyed array items.
 
+#### `Universal.Attributes.BracketSpacing` :wrench: :bar_chart: :books:
+
+Standardize the amount of spaces on the inside of attribute block brackets.
+
+* This sniff contains an `spacing` property to set the amount of spaces the sniff should check for.
+    Accepted values: (int) number of spaces. Defaults to `0` (spaces).
+* By default, the sniff does not make an exception for a new line after the attribute opener or before the attribute closer.
+    This can be changed by setting the `ignoreNewlines` property to `true`.
+    Accepted values: (bool) `true`|`false`. Defaults to `false`.
+    When the `ignoreNewlines` property is set to `true` and a new line is found, the sniff will flag stray blank lines at the start and/or end of an attribute block.
+
+#### `Universal.Attributes.DisallowAttributeParentheses` :wrench: :bar_chart: :books:
+
+Disallow the use of parentheses when instantiating an attribute without passing parameters.
+
+#### `Universal.Attributes.RequireAttributeParentheses` :wrench: :bar_chart: :books:
+
+Require the use of parentheses when instantiating an attribute, whether parameters are passed or not.
+
+#### `Universal.Attributes.TrailingComma` :wrench: :bar_chart: :books:
+
+Require a trailing comma for multi-line, multi-attribute attribute blocks and forbid trailing commas in single-line attribute blocks and in multi-line attributes containing only a single attribute.
+
 #### `Universal.Classes.DisallowAnonClassParentheses` :wrench: :bar_chart: :books:
 
 Disallow the use of parentheses when declaring an anonymous class without passing parameters.
@@ -220,15 +241,22 @@ Require a consistent modifier keyword order for class declarations.
 If a [`php_version` configuration option][php_version-config] has been passed to PHPCS using either `--config-set` or `--runtime-set`, it will be respected by the sniff.
 In effect, this means that the sniff will only report on PHP4-style constructors if the configured PHP version is less than 8.0.
 
-#### `Universal.CodeAnalysis.NoEchoSprintf` :wrench: :books:
-
-Detects use of the inefficient `echo [v]sprintf(...);` combi. Use `[v]printf()` instead.
-
 #### `Universal.CodeAnalysis.ForeachUniqueAssignment` :wrench: :books:
 
 Detects `foreach` control structures which use the same variable for both the key as well as the value assignment as this will lead to unexpected - and most likely unintended - behaviour.
 
 Note: The fixer will maintain the existing behaviour of the code. This may not be the _intended_ behaviour.
+
+#### `Universal.CodeAnalysis.NoDoubleNegative` :wrench: :books:
+
+Detects double negation `!!` in code, which is effectively the same as a boolean cast, but with a much higher cognitive load.
+Also detects triple negation `!!!`, which is effectively the same as a single negation.
+
+The sniff has modular error codes to allow for disabling individual checks. The error codes are: `FoundDouble`, `FoundDoubleWithInstanceof` (not auto-fixable) and `FoundTriple`.
+
+#### `Universal.CodeAnalysis.NoEchoSprintf` :wrench: :books:
+
+Detects use of the inefficient `echo [v]sprintf(...);` combi. Use `[v]printf()` instead.
 
 #### `Universal.CodeAnalysis.StaticInFinalClass` :wrench: :books:
 
@@ -357,6 +385,14 @@ Enforce that the names used in a class/enum "implements" statement or an interfa
     The fixer will separate each name with a comma and one space.
     If alternative formatting is desired, a sniff which will check and fix the formatting should be added to the ruleset.
 
+#### `Universal.Operators.ConcatPosition` :wrench: :bar_chart: :books:
+
+Enforce that the concatenation operator for multi-line concatenations is in a preferred position, either always at the start of the next line or always at the end of the previous line.
+
+* This sniff contains an `allowOnly` property to set the preferred position for the operator.
+    Accepted values: (string) `"start"` or `"end"`. Defaults to `"start"`.
+* Note: mid-line concatenation is still allowed and will not be flagged by this sniff.
+
 #### `Universal.Operators.DisallowLogicalAndOr` :bar_chart: :books:
 
 Enforce the use of the boolean `&&` and `||` operators instead of the logical `and`/`or` operators.
@@ -384,9 +420,29 @@ This is considered a **_risky_ fixer**.
 
 #### `Universal.Operators.TypeSeparatorSpacing` :wrench: :bar_chart: :books:
 
-Enforce no spaces around the union type and intersection type operators.
+Enforce spacing rules around the union, intersection and DNF type operators.
+* No space on either side of a union or intersection type operator.
+* No space on the inside of DNF type parenthesis or before/after if the previous/next "thing" is part of the type.
+* One space before a DNF open parenthesis when it is at the start of a type.
+* One space after a DNF close parenthesis when it is at the end of a type.
 
-The available error codes are: `UnionTypeSpacesBefore`, `UnionTypeSpacesAfter`, `IntersectionTypeSpacesBefore`, `IntersectionTypeSpacesAfter`.
+The available error codes are: `UnionTypeSpacesBefore`, `UnionTypeSpacesAfter`, `IntersectionTypeSpacesBefore`, `IntersectionTypeSpacesAfter`, `DNFOpenSpacesBefore`, `DNFOpenSpacesAfter`, `DNFCloseTypeSpacesBefore`, `DNFCloseTypeSpacesAfter`.
+
+#### `Universal.PHP.DisallowExitDieParentheses` :wrench: :bar_chart: :books:
+
+Disallow the use of parentheses when calling `exit` or `die` without passing parameters.
+
+#### `Universal.PHP.RequireExitDieParentheses` :wrench: :bar_chart: :books:
+
+Require the use of parentheses when calling `exit` or `die`, whether parameters are passed or not.
+
+#### `Universal.PHP.LowercasePHPTag` :wrench: :bar_chart: :books:
+
+Enforces that the "PHP" in a PHP open tag is lowercase.
+
+#### `Universal.PHP.NoFQNTrueFalseNull` :wrench: :books:
+
+Forbids using `true`, `false` and `null` as fully qualified constants.
 
 #### `Universal.PHP.OneStatementInShortEchoTag` :wrench: :books:
 
@@ -419,12 +475,6 @@ Forbid using import `use` statements for functions.
 
 See [`Universal.UseStatements.DisallowUseClass`](#universalusestatementsdisallowuseclass-bar_chart-books)  for information on the error codes.
 
-#### `Universal.UseStatements.LowercaseFunctionConst` :wrench: :bar_chart: :books:
-
-Enforce that `function` and `const` keywords when used in an import `use` statement are always lowercase.
-
-Companion sniff to the PHPCS native `Generic.PHP.LowerCaseKeyword` sniff which doesn't cover these keywords when used in an import `use` statement.
-
 #### `Universal.UseStatements.KeywordSpacing` :wrench: :bar_chart: :books:
 
 Enforce the use of a single space after the `use`, `function`, `const` keywords and both before and after the `as` keyword in import `use` statements.
@@ -432,6 +482,12 @@ Enforce the use of a single space after the `use`, `function`, `const` keywords 
 Companion sniff to the PHPCS native `Generic.WhiteSpace.LanguageConstructSpacing` sniff which doesn't cover the `function`, `const` and `as` keywords when used in an import `use` statement.
 
 The sniff has modular error codes to allow for disabling individual checks. The error codes are: `SpaceAfterUse`, `SpaceAfterFunction`, `SpaceAfterConst`, `SpaceBeforeAs` and `SpaceAfterAs`.
+
+#### `Universal.UseStatements.LowercaseFunctionConst` :wrench: :bar_chart: :books:
+
+Enforce that `function` and `const` keywords when used in an import `use` statement are always lowercase.
+
+Companion sniff to the PHPCS native `Generic.PHP.LowerCaseKeyword` sniff which doesn't cover these keywords when used in an import `use` statement.
 
 #### `Universal.UseStatements.NoLeadingBackslash` :wrench: :bar_chart: :books:
 
@@ -469,7 +525,7 @@ For the spacing part, the sniff makes the following exceptions:
 
 * The sniff has a separate error code - `TooMuchSpaceAfterCommaBeforeTrailingComment` - for when a comma is found with more than one space after it, followed by a trailing comment.
     Exclude this error code to allow trailing comment alignment.
-* The other error codes the sniff uses, `SpaceBefore`, `TooMuchSpaceAfter` and `NoSpaceAfter`, may be suffixed with a context indicator - `*InFunctionDeclaration`, `*InFunctionCall`, `*InClosureUse` or `*InDeclare` -.
+* The other error codes the sniff uses, `SpaceBefore`, `TooMuchSpaceAfter` and `NoSpaceAfter`, may be suffixed with a context indicator - `*InFunctionDeclaration`, `*InFunctionCall`, `*InClosureUse`, `*InAttributeBlock` or `*InDeclare` -.
     This allows for disabling the sniff in any of these contexts by excluding the specific suffixed error codes.
 * The sniff will respect a potentially set [`php_version` configuration option][php_version-config] when deciding how to handle the spacing after a heredoc/nowdoc closer.
     In effect, this means that the sniff will enforce a new line between the closer and a comma if the configured PHP version is less than 7.3.
@@ -492,6 +548,13 @@ While tab versus space based indentation is a question of preference, for mid-li
 > However, the sister-sniff `Generic.Whitespace.DisallowSpaceIndent` leaves mid-line tabs/spaces alone.
 > This sniff fills that gap.
 
+#### `Universal.WhiteSpace.FirstClassCallableSpacing` :wrench: :bar_chart: :books:
+
+Standardize the amount of spacing around the `...` in a first class callable.
+
+* This sniff contains an `spacing` property to set the amount of spaces the sniff should check for.
+    Accepted values: (int) number of spaces. Defaults to `0` (spaces).
+
 #### `Universal.WhiteSpace.PrecisionAlignment` :wrench: :books:
 
 Enforce code indentation to always be a multiple of a tabstop, i.e. disallow precision alignment.
@@ -508,7 +571,7 @@ The behaviour of the sniff is customizable via the following properties:
     If this property is not set, the sniff will look to the `--tab-width` CLI value.
     If that also isn't set, the default tab-width of `4` will be used.
 * `ignoreAlignmentBefore`: allows for providing a list of token names for which (preceding) precision alignment should be ignored.
-    Accepted values: (array<string>) token constant names. Defaults to an empty array.
+    Accepted values: (`array<string>`) token constant names. Defaults to an empty array.
     Usage example:
     ```xml
     <rule ref="Universal.WhiteSpace.PrecisionAlignment">
@@ -528,14 +591,15 @@ The behaviour of the sniff is customizable via the following properties:
     Accepted values: (bool)`true`|`false`. Defaults to `true`.
 
 
-Contributing
--------
+## Contributing
+
 Contributions to this project are welcome. Clone the repo, branch off from `develop`, make your changes, commit them and send in a pull request.
 
 If unsure whether the changes you are proposing would be welcome, open an issue first to discuss your proposal.
 
-License
--------
+
+## License
+
 This code is released under the [GNU Lesser General Public License (LGPLv3)](LICENSE).
 
 
@@ -543,8 +607,8 @@ This code is released under the [GNU Lesser General Public License (LGPLv3)](LIC
 [gha-qa-results]:        https://github.com/PHPCSStandards/PHPCSExtra/actions/workflows/basics.yml
 [gha-test-results]:      https://github.com/PHPCSStandards/PHPCSExtra/actions/workflows/test.yml
 
-[phpcs-gh]:              https://github.com/squizlabs/PHP_CodeSniffer
+[phpcs-gh]:              https://github.com/PHPCSStandards/PHP_CodeSniffer
 [phpcsutils-gh]:         https://github.com/PHPCSStandards/PHPCSUtils
 [composer-installer-gh]: https://github.com/PHPCSStandards/composer-installer
 
-[php_version-config]:    https://github.com/squizlabs/PHP_CodeSniffer/wiki/Configuration-Options#setting-the-php-version
+[php_version-config]:    https://github.com/PHPCSStandards/PHP_CodeSniffer/wiki/Configuration-Options#setting-the-php-version

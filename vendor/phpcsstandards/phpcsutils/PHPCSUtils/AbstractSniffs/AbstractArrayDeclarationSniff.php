@@ -10,15 +10,18 @@
 
 namespace PHPCSUtils\AbstractSniffs;
 
-use PHP_CodeSniffer\Exceptions\RuntimeException;
+use Exception;
 use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
+use PHPCSUtils\Exceptions\LogicException;
+use PHPCSUtils\Exceptions\UnexpectedTokenType;
 use PHPCSUtils\Tokens\Collections;
 use PHPCSUtils\Utils\Arrays;
 use PHPCSUtils\Utils\Numbers;
 use PHPCSUtils\Utils\PassedParameters;
 use PHPCSUtils\Utils\TextStrings;
+use Throwable;
 
 /**
  * Abstract sniff to easily examine all parts of an array declaration.
@@ -42,7 +45,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @var array
+     * @var array<int, array<string, mixed>>
      */
     protected $tokens;
 
@@ -79,7 +82,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @var array
+     * @var array<int, array<string, int|string>>
      */
     protected $arrayItems;
 
@@ -108,7 +111,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @var array
+     * @var array<int|string, int|string>
      */
     private $acceptedTokens = [
         \T_NULL                     => \T_NULL,
@@ -118,9 +121,25 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
         \T_DNUMBER                  => \T_DNUMBER,
         \T_CONSTANT_ENCAPSED_STRING => \T_CONSTANT_ENCAPSED_STRING,
         \T_STRING_CONCAT            => \T_STRING_CONCAT,
-        \T_INLINE_THEN              => \T_INLINE_THEN,
-        \T_INLINE_ELSE              => \T_INLINE_ELSE,
         \T_BOOLEAN_NOT              => \T_BOOLEAN_NOT,
+    ];
+
+    /**
+     * List of tokens which, when found directly before an open parenthesis, indicate a function call/callback.
+     *
+     * Note: some of these (end heredoc/nowdoc) can not result in valid code (parse error), but that's not our concern.
+     *
+     * @since 1.2.3
+     *
+     * @var array<int|string, int|string>
+     */
+    private $callbackIndicators = [
+        \T_CONSTANT_ENCAPSED_STRING => \T_CONSTANT_ENCAPSED_STRING,
+        \T_END_HEREDOC              => \T_END_HEREDOC,
+        \T_END_NOWDOC               => \T_END_NOWDOC,
+        \T_CLOSE_PARENTHESIS        => \T_CLOSE_PARENTHESIS,
+        \T_CLOSE_CURLY_BRACKET      => \T_CLOSE_CURLY_BRACKET,
+        \T_CLOSE_SQUARE_BRACKET     => \T_CLOSE_SQUARE_BRACKET,
     ];
 
     /**
@@ -143,6 +162,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
         $this->acceptedTokens += Tokens::$castTokens;
         $this->acceptedTokens += Tokens::$bracketTokens;
         $this->acceptedTokens += Tokens::$heredocTokens;
+        $this->acceptedTokens += Collections::ternaryOperators();
     }
 
     /**
@@ -152,7 +172,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
      *
      * @codeCoverageIgnore
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
@@ -179,7 +199,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
     {
         try {
             $this->arrayItems = PassedParameters::getParameters($phpcsFile, $stackPtr);
-        } catch (RuntimeException $e) {
+        } catch (UnexpectedTokenType $e) {
             // Parse error, short list, real square open bracket or incorrectly tokenized short array token.
             return;
         }
@@ -246,7 +266,7 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
         foreach ($this->arrayItems as $itemNr => $arrayItem) {
             try {
                 $arrowPtr = Arrays::getDoubleArrowPtr($phpcsFile, $arrayItem['start'], $arrayItem['end']);
-            } catch (RuntimeException $e) {
+            } catch (LogicException $e) {
                 // Parse error: empty array item. Ignore.
                 continue;
             }
@@ -468,7 +488,10 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
 
         $content = '';
 
-        for ($i = $firstNonEmpty; $i <= $lastNonEmpty; $i++) {
+        for ($i = $firstNonEmpty, $lastEffective = null;
+            $i <= $lastNonEmpty;
+            ($lastEffective = isset(Tokens::$emptyTokens[$this->tokens[$i]['code']]) === false ? $i : $lastEffective), $i++
+        ) {
             if (isset(Tokens::$commentTokens[$this->tokens[$i]['code']]) === true) {
                 continue;
             }
@@ -478,7 +501,24 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
                 continue;
             }
 
-            if (isset($this->acceptedTokens[$this->tokens[$i]['code']]) === false) {
+            // Handle FQN true/false/null for PHPCS 3.x.
+            if ($this->tokens[$i]['code'] === \T_NS_SEPARATOR) {
+                $nextNonEmpty   = $phpcsFile->findNext(Tokens::$emptyTokens, ($i + 1), null, true);
+                $nextNonEmptyLC = \strtolower($this->tokens[$nextNonEmpty]['content']);
+                if ($nextNonEmpty !== false
+                    && ($this->tokens[$nextNonEmpty]['code'] === \T_TRUE
+                    || $this->tokens[$nextNonEmpty]['code'] === \T_FALSE
+                    || $this->tokens[$nextNonEmpty]['code'] === \T_NULL)
+                ) {
+                    $content .= $this->tokens[$nextNonEmpty]['content'];
+                    $i        = $nextNonEmpty;
+                    continue;
+                }
+            }
+
+            if (isset($this->acceptedTokens[$this->tokens[$i]['code']]) === false
+                || \T_UNSET_CAST === $this->tokens[$i]['code']
+            ) {
                 // This is not a key we can evaluate. Might be a variable or constant.
                 return;
             }
@@ -489,6 +529,48 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
                 $content .= $number['content'];
                 $i        = $number['last_token'];
                 continue;
+            }
+
+            /*
+             * Make sure that when new/deprecated/removed casts are used in the code under scan and the sniff is run
+             * on a PHP version which doesn't support the cast, the eval() won't cause a deprecation notice,
+             * borking the scan of the file.
+             *
+             * - (unset) was deprecated in PHP 7.2 and removed in PHP 8.0;
+             * - (real) was deprecated in PHP 7.4 and removed in PHP 8.0;
+             * - (boolean) was deprecated in PHP 8.5 and will be removed in PHP 9.0;
+             * - (integer) was deprecated in PHP 8.5 and will be removed in PHP 9.0;
+             * - (double) was deprecated in PHP 8.5 and will be removed in PHP 9.0;
+             * - (string) was deprecated in PHP 8.5 and will be removed in PHP 9.0;
+             */
+            if (\T_DOUBLE_CAST === $this->tokens[$i]['code']) {
+                $content .= '(float)';
+                continue;
+            }
+
+            if (\PHP_VERSION_ID >= 80500) {
+                if (\T_INT_CAST === $this->tokens[$i]['code']) {
+                    $content .= '(int)';
+                    continue;
+                }
+
+                if (\T_BOOL_CAST === $this->tokens[$i]['code']) {
+                    $content .= '(bool)';
+                    continue;
+                }
+
+                if (\T_BINARY_CAST === $this->tokens[$i]['code']) {
+                    $content .= '(string)';
+                    continue;
+                }
+            }
+
+            if (isset($lastEffective) === true
+                && $this->tokens[$i]['code'] === \T_OPEN_PARENTHESIS
+                && isset($this->callbackIndicators[$this->tokens[$lastEffective]['code']]) === true
+            ) {
+                // Bow out for potential function call in callback format.
+                return;
             }
 
             // Account for heredoc with vars.
@@ -511,8 +593,16 @@ abstract class AbstractArrayDeclarationSniff implements Sniff
             $content .= $this->tokens[$i]['content'];
         }
 
-        // The PHP_EOL is to prevent getting parse errors when the key is a heredoc/nowdoc.
-        $key = eval('return ' . $content . ';' . \PHP_EOL);
+        try {
+            // The PHP_EOL is to prevent getting parse errors when the key is a heredoc/nowdoc.
+            $key = @eval('return ' . $content . ';' . \PHP_EOL);
+        } catch (Throwable $e) { // phpcs:ignore PHPCompatibility.Interfaces.NewInterfaces.throwableFound
+            // The code didn't evaluate cleanly on PHP >= 7.0. Bow out.
+            return;
+        } catch (Exception $e) {
+            // The code didn't evaluate cleanly on PHP < 7.0. Bow out.
+            return;
+        }
 
         /*
          * Ok, so now we know the base value of the key, let's determine whether it is

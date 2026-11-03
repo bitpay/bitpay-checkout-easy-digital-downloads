@@ -56,13 +56,16 @@ final class DisallowInlineTabsSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @var array
+     * @var array<int|string, true>
      */
     private $find = [
         \T_WHITESPACE             => true,
         \T_DOC_COMMENT_WHITESPACE => true,
         \T_DOC_COMMENT_STRING     => true,
         \T_COMMENT                => true,
+        \T_START_HEREDOC          => true,
+        \T_START_NOWDOC           => true,
+        \T_YIELD_FROM             => true,
     ];
 
     /**
@@ -70,7 +73,7 @@ final class DisallowInlineTabsSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @return int[]
+     * @return array<int|string>
      */
     public function register()
     {
@@ -91,18 +94,18 @@ final class DisallowInlineTabsSniff implements Sniff
     public function process(File $phpcsFile, $stackPtr)
     {
         if (isset($this->tabWidth) === false) {
-            $this->tabWidth = Helper::getTabWidth($phpcsFile);
+            $this->tabWidth = (int) Helper::getTabWidth($phpcsFile);
         }
 
         if (\defined('PHP_CODESNIFFER_IN_TESTS')) {
-            $this->tabWidth = Helper::getCommandLineData($phpcsFile, 'tabWidth');
+            $this->tabWidth = (int) Helper::getCommandLineData($phpcsFile, 'tabWidth');
         }
 
         $tokens = $phpcsFile->getTokens();
         $dummy  = new DummyTokenizer('', $phpcsFile->config);
 
         for ($i = 0; $i < $phpcsFile->numTokens; $i++) {
-            // Skip all non-whitespace tokens and skip whitespace at the start of a new line.
+            // Skip all non-target tokens and skip whitespace at the start of a new line.
             if (isset($this->find[$tokens[$i]['code']]) === false
                 || (($tokens[$i]['code'] === \T_WHITESPACE
                     || $tokens[$i]['code'] === \T_DOC_COMMENT_WHITESPACE)
@@ -127,13 +130,14 @@ final class DisallowInlineTabsSniff implements Sniff
              * so from here on out, we **know** there will be tabs in the content.
              */
             $origContent = $token['orig_content'];
+            $commentOnly = '';
 
             $multiLineComment = false;
             if (($tokens[$i]['code'] === \T_COMMENT
                 || isset(Tokens::$phpcsCommentTokens[$tokens[$i]['code']]))
-                 && $tokens[$i]['column'] === 1
-                 && ($tokens[($i - 1)]['code'] === \T_COMMENT
-                 || isset(Tokens::$phpcsCommentTokens[$tokens[($i - 1)]['code']]))
+                && $tokens[$i]['column'] === 1
+                && ($tokens[($i - 1)]['code'] === \T_COMMENT
+                || isset(Tokens::$phpcsCommentTokens[$tokens[($i - 1)]['code']]))
             ) {
                 $multiLineComment = true;
             }

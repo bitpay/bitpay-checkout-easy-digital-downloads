@@ -1,8 +1,8 @@
-# Change Log for the PHPCSExtra standard for PHP CodeSniffer
+# Change Log for the PHPCSExtra standard for PHP_CodeSniffer
 
 All notable changes to this project will be documented in this file.
 
-This projects adheres to [Keep a CHANGELOG](http://keepachangelog.com/) and uses [Semantic Versioning](http://semver.org/).
+This projects adheres to [Keep a CHANGELOG](https://keepachangelog.com/) and uses [Semantic Versioning](https://semver.org/).
 
 **Legend**:
 :wrench: = Includes auto-fixer.
@@ -13,6 +13,267 @@ This projects adheres to [Keep a CHANGELOG](http://keepachangelog.com/) and uses
 ## [Unreleased]
 
 _Nothing yet._
+
+
+## [1.5.1] - 2026-07-27
+
+### Changed
+
+#### Other
+
+* Composer: The minimum `PHPCSUtils` requirement has been updated to `1.2.3` (was `1.2.0`). [#464]
+* Various housekeeping. Including a contribution by [@rodrigoprimo].
+
+[#464]: https://github.com/PHPCSStandards/PHPCSExtra/pull/464
+
+
+## [1.5.0] - 2025-11-13
+
+### Added
+
+#### Universal
+
+* :wrench: :bar_chart: :books: New `Universal.Attributes.BracketSpacing` sniff to enforce a fixed number of spaces on the inside of attribute block brackets. [#386], [#406]
+    The sniff offers the following properties to influence its behaviour:
+    - `spacing` (defaults to `0`).
+    - `ignoreNewlines` (defaults to `false`).
+        When new lines are allowed (`ignoreNewlines`=`true`) and a new line is found, the sniff will verify that there are no superfluous blank lines at the start/end of an attribute block.
+* :wrench: :bar_chart: :books: New `Universal.Attributes.DisallowAttributeParentheses` sniff to forbid parentheses for attribute instantiations without arguments. [#387], [#409]
+* :wrench: :bar_chart: :books: New `Universal.Attributes.RequireAttributeParentheses` sniff to demand that all attribute instantiations always use parentheses, even if no argument is passed. [#387], [#410]
+* :wrench: :bar_chart: :books: New `Universal.Attributes.TrailingComma` sniff to demand a trailing comma for multi-line, multi-attribute attribute blocks and forbid trailing commas in single-line attribute blocks and in multi-line attributes containing only a single attribute. [#397], [#413]
+* :wrench: :bar_chart: :books: New `Universal.PHP.DisallowExitDieParentheses` sniff to forbid invocations of `exit`/`die` with parentheses when no argument is passed. [#399]
+* :wrench: :bar_chart: :books: New `Universal.PHP.RequireExitDieParentheses` sniff to demand that invocations of `exit`/`die` always use parentheses, even if no argument is passed. [#398]
+* :wrench: :books: New `Universal.WhiteSpace.FirstClassCallableSpacing` sniff to enforce consistent spacing around the ellipses for first class callables. [#385]
+    The sniff offers the following property to influence its behaviour: `spacing` (defaults to `0`).
+
+### Changed
+
+#### Universal
+
+* `Universal.WhiteSpace.CommaSpacing`: improved handling of commas in PHP attributes. [#391], [#412]
+    - The spacing after a trailing comma (after the last attribute in a block) will no longer be checked to prevent potential conflicts with attribute bracket spacing sniffs.
+    - Spacing errors for commas between attributes in an attribute block will now get an `*InAttributeBlock` error code suffix, so in-/excluding them selectively is more straight-forward.
+        Note: spacing around commas between _parameters passed to an attribute_ will still be reported with the `*InFunctionCall` error code suffix, same as before.
+    - Metrics for comma spacing in attribute blocks is now also measured and reported separately.
+
+#### Other
+
+* Composer: The minimum `PHP_CodeSniffer` requirement has been updated to `^3.13.5 || ^4.0.1` (was `^3.13.4 || ^4.0.0`). [#408]
+* Composer: The minimum `PHPCSUtils` requirement has been updated to `^1.2.0` (was `^1.1.2`). [#408]
+* Various housekeeping.
+
+[#385]: https://github.com/PHPCSStandards/PHPCSExtra/pull/385
+[#386]: https://github.com/PHPCSStandards/PHPCSExtra/issues/386
+[#387]: https://github.com/PHPCSStandards/PHPCSExtra/issues/387
+[#391]: https://github.com/PHPCSStandards/PHPCSExtra/issues/391
+[#397]: https://github.com/PHPCSStandards/PHPCSExtra/issues/397
+[#398]: https://github.com/PHPCSStandards/PHPCSExtra/pull/398
+[#399]: https://github.com/PHPCSStandards/PHPCSExtra/pull/399
+[#406]: https://github.com/PHPCSStandards/PHPCSExtra/pull/406
+[#408]: https://github.com/PHPCSStandards/PHPCSExtra/pull/408
+[#409]: https://github.com/PHPCSStandards/PHPCSExtra/pull/409
+[#410]: https://github.com/PHPCSStandards/PHPCSExtra/pull/410
+[#412]: https://github.com/PHPCSStandards/PHPCSExtra/pull/412
+[#413]: https://github.com/PHPCSStandards/PHPCSExtra/pull/413
+
+
+## [1.4.2] - 2025-10-28
+
+### Changed
+
+#### Other
+
+* Various housekeeping.
+
+### Fixed
+
+#### Universal
+
+* `Universal.OOStructures.AlphabeticExtendsImplements` incorrectly displayed the "expected" and "found" names. [#378]
+* `Universal.WhiteSpace.CommaSpacing` could accidentally cause a fatal error if the content adjacent to the comma was a text string containing percentage signs. Thanks [@westonruter] for reporting! [#400], [#401]
+
+[#378]: https://github.com/PHPCSStandards/PHPCSExtra/pull/378
+[#400]: https://github.com/PHPCSStandards/PHPCSExtra/issues/400
+[#401]: https://github.com/PHPCSStandards/PHPCSExtra/pull/401
+
+
+## [1.4.1] - 2025-09-05
+
+### Changed
+
+#### Other
+
+* Various housekeeping.
+
+### Fixed
+
+#### Universal
+
+* `Universal.PHP.NoFQNTrueFalseNull`: fix breakage due to upstream change in tokenization. [#375]
+
+[#375]: https://github.com/PHPCSStandards/PHPCSExtra/pull/375
+
+
+## [1.4.0] - 2025-06-14
+
+### Added
+
+* All sniffs: compatibility with the new PHP_CodeSniffer `4.x` branch in anticipation of the PHP_CodeSniffer 4.0 release. [#367]
+    PHPCSExtra should now be fully compatible with PHP_CodeSniffer 4.0. If you still find an issue, please report it.
+
+### Changed
+
+#### Other
+
+* Composer: The minimum `PHP_CodeSniffer` requirement has been updated to `^3.13.0` (was `^3.12.1`). [#361]
+* Composer: The minimum `PHPCSUtils` requirement has been updated to `^1.1.0` (was `^1.0.12`). [#361]
+* Various housekeeping.
+
+### Deprecated
+
+#### Universal
+
+* `Universal.WhiteSpace.PrecisionAlignment`: support for scanning JS/CSS files via this sniff is now deprecated. [#367]
+
+### Fixed
+
+#### Universal
+
+* `Universal.Arrays.DuplicateArrayKey`: false positives for numeric strings with leading/trailing underscores. Fixed via the update to PHPCSUtils 1.1.0.  [#363]
+* `Universal.Arrays.DuplicateArrayKey`: false negatives for fully qualified `true`/`false`/`null` arrays keys. Fixed via the update to PHPCSUtils 1.1.0. [#363]
+* `Universal.WhiteSpace.CommaSpacing`: wrong errorcode for comma's in closure use statements after the update to PHPCSUtils 1.1.0. [#362]
+
+[#361]: https://github.com/PHPCSStandards/PHPCSExtra/pull/361
+[#362]: https://github.com/PHPCSStandards/PHPCSExtra/pull/362
+[#363]: https://github.com/PHPCSStandards/PHPCSExtra/pull/363
+[#367]: https://github.com/PHPCSStandards/PHPCSExtra/pull/367
+
+
+## [1.3.1] - 2025-06-08
+
+### Changed
+
+#### Other
+
+* Composer: The minimum `PHPCSUtils` requirement has been updated to `^1.0.12` (was `^1.0.9`). [#346]
+* Various housekeeping.
+
+### Fixed
+
+#### Universal
+
+* `Universal.UseStatements.DisallowMixedGroupUse`: the fixer could get confused when the "base" name for the group name contained a leading backslash, leading to parse errors in the fixed code. [#350]
+
+[#346]: https://github.com/PHPCSStandards/PHPCSExtra/pull/346
+[#350]: https://github.com/PHPCSStandards/PHPCSExtra/pull/350
+
+
+## [1.3.0] - 2025-04-21
+
+### Added
+
+#### Universal
+
+* :wrench: :books: New `Universal.PHP.NoFQNTrueFalseNull` sniff to forbid using `true`, `false` and `null` as fully qualified constants. Thanks [@rodrigoprimo] for reviewing. [#327]
+* `Universal.Operators.TypeSeparatorSpacing`: support for checking the spacing around the parentheses used in PHP 8.2+ DNF types. [#329]
+
+### Changed
+
+#### Universal
+
+* The `Universal.WhiteSpace.DisallowInlineTabs` sniff will now also check for inline tabs in heredoc/nowdoc openers and between the `yield` and `from` keywords. [#320]
+
+#### Other
+
+* Composer: The minimum `PHP_CodeSniffer` requirement has been updated to `^3.12.1` (was `^3.8.0`). [#330]
+* Developer happiness: prevent creating a `composer.lock` file. Thanks [@fredden]! [#307]
+* Various housekeeping, including improvements to the documentation and tests.
+
+[#307]: https://github.com/PHPCSStandards/PHPCSExtra/pull/307
+[#320]: https://github.com/PHPCSStandards/PHPCSExtra/pull/320
+[#327]: https://github.com/PHPCSStandards/PHPCSExtra/pull/327
+[#329]: https://github.com/PHPCSStandards/PHPCSExtra/pull/329
+[#330]: https://github.com/PHPCSStandards/PHPCSExtra/pull/330
+
+
+## [1.2.1] - 2023-12-08
+
+### Changed
+
+#### Other
+
+* Composer: The minimum `PHP_CodeSniffer` requirement has been updated to `^3.8.0` (was `^3.7.2`). [#298]
+* Composer: The minimum `PHPCSUtils` requirement has been updated to `^1.0.9` (was `^1.0.8`). [#298]
+
+Please ensure you run `composer update phpcsstandards/phpcsextra --with-dependencies` to benefit from this.
+
+[#298]: https://github.com/PHPCSStandards/PHPCSExtra/pull/298
+
+
+## [1.2.0] - 2023-12-02
+
+### Added
+
+#### Universal
+
+* :wrench: :books: New `Universal.CodeAnalysis.NoDoubleNegative` sniff to detect double negatives (!!) and advise to use a boolean cast instead. Thanks [@diedexx] for reviewing. [#277]
+* :wrench: :books: New `Universal.Operators.ConcatPosition` sniff to enforce that the concatenation operator for multi-line concatenations is in a preferred position, either always at the start of the next line or always at the end of the previous line. [#294]
+* :wrench: :bar_chart: :books: New `Universal.PHP.LowercasePHPTag` sniff to enforce that the "PHP" in a PHP open tag is lowercase. Thanks [@fredden] for reviewing. [#276]
+
+### Changed
+
+#### NormalizedArrays
+
+* `NormalizedArrays.Arrays.CommaAfterLast`: the sniff now has two extra error codes to distinguish between multi-line arrays with the last array item on the _same line_ as the array closer vs the last array item being on a line _before_ the array closer. Thanks [@stronk7] for suggesting and patching this. [#283], [#284]
+    These new error codes allow for selectively excluding that specific situation from triggering the sniff.
+    The new error codes are `FoundMultiLineCloserSameLine` (for `multiLine="forbid"`) and `MissingMultiLineCloserSameLine` (for `multiLine="enforce"`).
+    The pre-existing `FoundMultiLine` and `FoundSingleLine` error codes continue to be used for multi-line arrays with the last array item on a different line than the array closer.
+
+#### Other
+
+* Various housekeeping.
+
+[#276]: https://github.com/PHPCSStandards/PHPCSExtra/pull/276
+[#277]: https://github.com/PHPCSStandards/PHPCSExtra/pull/277
+[#283]: https://github.com/PHPCSStandards/PHPCSExtra/issues/283
+[#284]: https://github.com/PHPCSStandards/PHPCSExtra/pull/284
+[#294]: https://github.com/PHPCSStandards/PHPCSExtra/pull/294
+
+
+## [1.1.2] - 2023-09-21
+
+### Changed
+
+#### Other
+
+* Various housekeeping.
+
+### Fixed
+
+#### Universal
+
+* `Universal.CodeAnalysis.ConstructorDestructorReturn`: the sniff will now correctly ignore methods mirroring the class name (PHP-4 style constructors) in namespaced code. [#207], [#272]
+
+[#272]: https://github.com/PHPCSStandards/PHPCSExtra/pull/272
+
+
+## [1.1.1] - 2023-08-26
+
+### Changed
+
+#### Modernize
+
+* `Modernize.FunctionCalls.Dirname`: the sniff will now respect a potentially set [`php_version` configuration option][php_version-config] and only report on modernizations which are possible on the configured `php_version`. [#261]
+    If the `php_version` is not set, the sniff will continue to report on all modernization options.
+
+#### Other
+
+* Various documentation improvements. Props in part to [@szepeviktor].
+* Improved defensive coding in select places.
+* Various housekeeping.
+
+[#261]: https://github.com/PHPCSStandards/PHPCSExtra/pull/261
+
 
 ## [1.1.0] - 2023-07-19
 
@@ -207,13 +468,14 @@ For the full list of features, please see the changelogs of the alpha/rc release
     - When using this sniff with tab-based standards, please ensure that the `tab-width` is set and either don't set the `$indent` property or set it to the tab-width (or a multiple thereof).
     - The fixer works based on "best guess" and may not always result in the desired indentation. Combine this sniff with the `Generic.WhiteSpace.ScopeIndent` sniff for more precise indentation fixes.
     - The behaviour of the sniff is customizable via the following properties:
-        - `indent`: the indent used for the codebase.
-        - `ignoreAlignmentBefore`: allows for providing a list of token names for which (preceding) precision alignment should be ignored.
-        - `ignoreBlankLines`: whether or not potential trailing whitespace on otherwise blank lines should be examined or ignored.
+        + `indent`: the indent used for the codebase.
+        + `ignoreAlignmentBefore`: allows for providing a list of token names for which (preceding) precision alignment should be ignored.
+        + `ignoreBlankLines`: whether or not potential trailing whitespace on otherwise blank lines should be examined or ignored.
 
 ### Changed
 
 #### Universal
+
 * `Universal.Arrays.DisallowShortArraySyntax`: the sniff will now record metrics about long vs short array usage. [#154]
 * `Universal.Arrays.DuplicateArrayKey`: where relevant, the sniff will now make a distinction between keys which will be duplicate in all PHP version and (numeric) keys which will only be a duplicate key in [PHP < 8.0 or PHP >= 8.0][php-rfc-negative_array_index]. [#177], [#178]
     If a [`php_version` configuration option][php_version-config] has been passed to PHPCS, it will be respected by the sniff and only report duplicate keys for the configured PHP version.
@@ -227,6 +489,7 @@ For the full list of features, please see the changelogs of the alpha/rc release
 * `Universal.UseStatements.NoLeadingBackslash`: the sniff will now also flag and auto-fix leading backslashes in group use statements. [#167]
 
 #### Other
+
 * Updated the sniffs for compatibility with PHPCSUtils 1.0.0-alpha4. [#134]
 * Updated the sniffs to correctly handle PHP 8.0/8.1/8.2 features whenever relevant.
 * Readme: Updated installation instructions for compatibility with Composer 2.2+. [#101]
@@ -241,11 +504,13 @@ For the full list of features, please see the changelogs of the alpha/rc release
 The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which potentially could have affected sniffs in this package.
 
 #### NormalizedArrays
+
 * `NormalizedArrays.Arrays.ArrayBraceSpacing`: the sniff now allows for trailing comments after the array opener in multi-line arrays. [#118]
 * `NormalizedArrays.Arrays.ArrayBraceSpacing`: trailing comments at the end of an array, but before the closer, in multi-line arrays will no longer confuse the sniff. [#135]
 * `NormalizedArrays.Arrays.CommaAfterLast`: the fixer will now recognize PHP 7.3+ flexible heredoc/nowdocs and in that case, will add the comma on the same line as the heredoc/nowdoc closer. [#144]
 
 #### Universal
+
 * `Universal.Arrays.DisallowShortArraySyntax`: nested short arrays in short lists will now be detected and fixed correctly. [#153]
 * `Universal.ControlStructures.DisallowAlternativeSyntax`: the sniff will no longer bow out indiscriminately when the `allowWithInlineHTML` property is set to `true`. [#90], [#161]
 * `Universal.ControlStructures.DisallowAlternativeSyntax`: when alternative control structure syntax is allowed in combination with inline HTML (`allowWithInlineHTML` property set to `true`), inline HTML in functions declared within the control structure body will no longer be taken into account for determining whether or not the control structure contains inline HTML. [#160]
@@ -322,7 +587,7 @@ The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which pote
 
 [php-manual-dirname]:           https://www.php.net/function.dirname
 [php-rfc-negative_array_index]: https://wiki.php.net/rfc/negative_array_index
-[ESLint "no lonely if"]:        https://eslint.org/docs/rules/no-lonely-if
+[ESLint "no lonely if"]:        https://eslint.org/docs/latest/rules/no-lonely-if
 [PHPCSUtils 1.0.0-alpha4]:      https://github.com/PHPCSStandards/PHPCSUtils/releases/tag/1.0.0-alpha4
 
 
@@ -344,19 +609,19 @@ The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which pote
 * :wrench: :bar_chart: :books: New `Universal.Operators.StrictComparisons` sniff to enforce the use of strict comparisons. [#48]
     Warning: the auto-fixer for this sniff _may_ cause bugs in applications and should be used with care! This is considered a _risky_ fixer.
 * :wrench: :bar_chart: :books: New `Universal.OOStructures.AlphabeticExtendsImplements` sniff to verify that the names used in a class "implements" statement or an interface "extends" statement are listed in alphabetic order. [#55]
-    * This sniff contains a public `orderby` property to determine the sort order to use for the statement.
+    - This sniff contains a public `orderby` property to determine the sort order to use for the statement.
         If all names used are unqualified, the sort order won't make a difference.
         However, if one or more of the names are partially or fully qualified, the chosen sort order will determine how the sorting between unqualified, partially and fully qualified names is handled.
         The sniff supports two sort order options:
-        - _'name'_ : sort by the interface name only (default);
-        - _'full'_ : sort by the full name as used in the statement (without leading backslash).
+        + _'name'_ : sort by the interface name only (default);
+        + _'full'_ : sort by the full name as used in the statement (without leading backslash).
         In both cases, the sorting will be done using natural sort, case-insensitive.
-    * The sniff has modular error codes to allow for selective inclusion/exclusion:
-        - `ImplementsWrongOrder` - for "class implements" statements.
-        - `ImplementsWrongOrderWithComments` - for "class implements" statements interlaced with comments. These will not be auto-fixed.
-        - `ExtendsWrongOrder` - for "interface extends" statements.
-        - `ExtendsWrongOrderWithComments` - for "interface extends" statements interlaced with comments. These will not be auto-fixed.
-    * When fixing, the existing spacing between the names in an `implements`/`extends` statement will not be maintained.
+    - The sniff has modular error codes to allow for selective inclusion/exclusion:
+        + `ImplementsWrongOrder` - for "class implements" statements.
+        + `ImplementsWrongOrderWithComments` - for "class implements" statements interlaced with comments. These will not be auto-fixed.
+        + `ExtendsWrongOrder` - for "interface extends" statements.
+        + `ExtendsWrongOrderWithComments` - for "interface extends" statements interlaced with comments. These will not be auto-fixed.
+    - When fixing, the existing spacing between the names in an `implements`/`extends` statement will not be maintained.
         The fixer will separate each name with a comma and one space.
         If alternative formatting is desired, a sniff which will check and fix the formatting should be added to the ruleset.
 * :wrench: :bar_chart: :books: New `Universal.UseStatements.LowercaseFunctionConst` sniff to enforce that `function` and `const` keywords when used in an import `use` statement are always lowercase. [#58]
@@ -368,6 +633,7 @@ The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which pote
 ### Changed
 
 #### Other
+
 * The `master` branch has been renamed to `stable`.
 * Composer: The version requirements for the [Composer PHPCS plugin] have been widened to allow for version 0.7.0 which supports Composer 2.0.0. [#62]
 * Various housekeeping.
@@ -393,17 +659,20 @@ The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which pote
 ### Added
 
 #### Universal
+
 * :wrench: :bar_chart: :books: New `Universal.ControlStructures.DisallowAlternativeSyntax` sniff to disallow using the alternative syntax for control structures. [#23]
     - This sniff contains a `allowWithInlineHTML` property to allow alternative syntax when inline HTML is used within the control structure. In all other cases, the use of the alternative syntax will still be disallowed.
     - The sniff has modular error codes to allow for making exceptions based on specific control structures and/or specific control structures in combination with inline HTML.
 * :bar_chart: `Universal.UseStatements.DisallowUseClass/Function/Const`: new, additional metrics about the import source will be shown in the `info` report. [#25]
 
 #### Other
+
 * Readme: installation instructions and sniff list. [#26]
 
 ### Changed
 
 #### Universal
+
 * `Universal.Arrays.DuplicateArrayKey`: wording of the error message. [#18]
 * `Universal.UseStatements.DisallowUseClass/Function/Const`: the error codes have been made more modular. [#25]
     Each of these sniffs now has four additional error codes:
@@ -414,12 +683,14 @@ The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which pote
     In all other circumstances, the existing error codes <code>FoundWithAlias</code> and <code>FoundWithoutAlias</code> will continue to be used.
 
 #### Other
+
 * Improved formatting of the CLI documentation which can be viewed using `--generator=text`. [#17]
 * Various housekeeping.
 
 ### Fixed
 
 #### Universal
+
 * `Universal.Arrays.DuplicateArrayKey`: improved handling of parse errors. [#34]
 * `Universal.ControlStructures.IfElseDeclaration`: the fixer will now respect tab indentation. [#19]
 * `Universal.UseStatements.DisallowUseClass/Function/Const`: the determination of whether a import is aliased in now done in a case-insensitive manner. [#25]
@@ -439,7 +710,7 @@ The upgrade to PHPCSUtils 1.0.0-alpha4 took care of a number of bugs, which pote
 
 Initial alpha release containing:
 * A `NormalizedArrays` standard which will contain a full set of sniffs to check the formatting of array declarations.
-* A `Universal` standard which will contain a collection of universal sniffs.
+* A `Universal` standard which will contain a collection of universally applicable sniffs.
     DO NOT INCLUDE THIS AS A STANDARD.
     `Universal`, like the upstream PHPCS `Generic` standard, contains sniffs which contradict each other.
     Include individual sniffs from this standard in a custom project/company ruleset to use them.
@@ -447,6 +718,7 @@ Initial alpha release containing:
 This initial alpha release contains the following sniffs:
 
 ### NormalizedArrays
+
 * :wrench: :bar_chart: :books: `NormalizedArrays.Arrays.ArrayBraceSpacing`: enforce consistent spacing for the open/close braces of array declarations.
     The sniff allows for having different settings for:
     - Space between the array keyword and the open parenthesis for long arrays via the `keywordSpacing` property.
@@ -468,6 +740,7 @@ This initial alpha release contains the following sniffs:
     The valid values are: <code>enforce</code>, <code>forbid</code> or <code>skip</code> to not check the comma after the last array item for a particular type of array.
 
 ### Universal
+
 * :books: `Universal.Arrays.DuplicateArrayKey`: detects duplicate array keys in array declarations.
 * :books: `Universal.Arrays.MixedArrayKeyTypes`: best practice sniff: don't use a mix of integer and numeric keys for array items.
 * :books: `Universal.Arrays.MixedKeyedUnkeyedArray`: best practice sniff: don't use a mix of keyed and unkeyed array items.
@@ -485,9 +758,20 @@ This initial alpha release contains the following sniffs:
     Individual sub-types can be allowed by excluding specific error codes.
 
 [Composer PHPCS plugin]: https://github.com/PHPCSStandards/composer-installer
-[php_version-config]:    https://github.com/squizlabs/PHP_CodeSniffer/wiki/Configuration-Options#setting-the-php-version
+[php_version-config]:    https://github.com/PHPCSStandards/PHP_CodeSniffer/wiki/Configuration-Options#setting-the-php-version
 
 [Unreleased]: https://github.com/PHPCSStandards/PHPCSExtra/compare/stable...HEAD
+[1.5.1]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.5.0...1.5.1
+[1.5.0]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.4.2...1.5.0
+[1.4.2]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.4.1...1.4.2
+[1.4.1]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.4.0...1.4.1
+[1.4.0]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.3.1...1.4.0
+[1.3.1]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.3.0...1.3.1
+[1.3.0]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.2.1...1.3.0
+[1.2.1]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.2.0...1.2.1
+[1.2.0]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.1.2...1.2.0
+[1.1.2]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.1.1...1.1.2
+[1.1.1]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.0.4...1.1.0
 [1.0.4]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.0.2...1.0.3
@@ -498,6 +782,12 @@ This initial alpha release contains the following sniffs:
 [1.0.0-alpha3]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.0.0-alpha2...1.0.0-alpha3
 [1.0.0-alpha2]: https://github.com/PHPCSStandards/PHPCSExtra/compare/1.0.0-alpha1...1.0.0-alpha2
 
-[@anomiex]:   https://github.com/anomiex
-[@derickr]:   https://github.com/derickr
-[@GaryJones]: https://github.com/GaryJones
+[@anomiex]:      https://github.com/anomiex
+[@derickr]:      https://github.com/derickr
+[@diedexx]:      https://github.com/diedexx
+[@fredden]:      https://github.com/fredden
+[@GaryJones]:    https://github.com/GaryJones
+[@rodrigoprimo]: https://github.com/rodrigoprimo
+[@stronk7]:      https://github.com/stronk7
+[@szepeviktor]:  https://github.com/szepeviktor
+[@westonruter]:  https://github.com/westonruter

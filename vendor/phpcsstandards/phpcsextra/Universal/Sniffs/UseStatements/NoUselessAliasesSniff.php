@@ -10,9 +10,10 @@
 
 namespace PHPCSExtra\Universal\Sniffs\UseStatements;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
+use PHPCSUtils\Tokens\Collections;
 use PHPCSUtils\Utils\NamingConventions;
 use PHPCSUtils\Utils\UseStatements;
 
@@ -29,20 +30,11 @@ final class NoUselessAliasesSniff implements Sniff
 {
 
     /**
-     * Name of the "Use import source" metric.
-     *
-     * @since 1.1.0
-     *
-     * @var string
-     */
-    const METRIC_NAME = 'Import use statement type';
-
-    /**
      * Returns an array of tokens this test wants to listen for.
      *
      * @since 1.1.0
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
@@ -101,8 +93,8 @@ final class NoUselessAliasesSniff implements Sniff
 
         // Now check the names in each use statement for useless aliases.
         foreach ($useStatements as $type => $statements) {
-            foreach ($statements as $alias => $fqName) {
-                $unqualifiedName = \ltrim(\substr($fqName, \strrpos($fqName, '\\')), '\\');
+            foreach ($statements as $alias => $qualifiedName) {
+                $unqualifiedName = \ltrim(\substr($qualifiedName, (int) \strrpos($qualifiedName, '\\')), '\\');
 
                 $uselessAlias = false;
                 if ($type === 'const') {
@@ -126,15 +118,28 @@ final class NoUselessAliasesSniff implements Sniff
 
                     // Make sure this is really the right one.
                     $prev = $phpcsFile->findPrevious(Tokens::$emptyTokens, ($asPtr - 1), null, true);
-                    if ($tokens[$prev]['code'] !== \T_STRING
-                        || $tokens[$prev]['content'] !== $unqualifiedName
+                    if (isset(Collections::nameTokens()[$tokens[$prev]['code']]) === false) {
+                        // Shouldn't be possible.
+                        continue; // @codeCoverageIgnore
+                    } elseif ($tokens[$prev]['code'] === \T_STRING
+                        && $tokens[$prev]['content'] !== $unqualifiedName
+                    ) {
+                        continue;
+                    } elseif ($tokens[$prev]['code'] === \T_NAME_QUALIFIED
+                        && $tokens[$prev]['content'] !== $qualifiedName
+                        && \substr($qualifiedName, -(\strlen($tokens[$prev]['content']))) !== $tokens[$prev]['content']
+                    ) {
+                        continue;
+                    } elseif ($tokens[$prev]['code'] === \T_NAME_FULLY_QUALIFIED
+                        && $tokens[$prev]['content'] !== '\\' . $qualifiedName
+                        && \substr($qualifiedName, -(\strlen($tokens[$prev]['content']))) !== $tokens[$prev]['content']
                     ) {
                         continue;
                     }
 
                     $error = 'Useless alias "%s" found for import of "%s"';
                     $code  = 'Found';
-                    $data  = [$alias, $fqName];
+                    $data  = [$alias, $qualifiedName];
 
                     // Okay, so this is the one which should be flagged.
                     $hasComments = $phpcsFile->findNext(Tokens::$commentTokens, ($prev + 1), $aliasPtr);

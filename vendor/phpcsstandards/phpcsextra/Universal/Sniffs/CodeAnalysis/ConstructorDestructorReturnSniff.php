@@ -18,6 +18,7 @@ use PHPCSUtils\BackCompat\Helper;
 use PHPCSUtils\Tokens\Collections;
 use PHPCSUtils\Utils\FunctionDeclarations;
 use PHPCSUtils\Utils\GetTokensAsString;
+use PHPCSUtils\Utils\Namespaces;
 use PHPCSUtils\Utils\NamingConventions;
 use PHPCSUtils\Utils\ObjectDeclarations;
 use PHPCSUtils\Utils\Scopes;
@@ -45,7 +46,7 @@ final class ConstructorDestructorReturnSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @return int[]
+     * @return array<int|string>
      */
     public function register()
     {
@@ -105,6 +106,17 @@ final class ConstructorDestructorReturnSniff implements Sniff
                 return;
             }
 
+            if (Namespaces::determineNamespace($phpcsFile, $stackPtr) !== '') {
+                /*
+                 * Namespaced methods with the same name as the class are treated as
+                 * regular methods, so we can bow out if we're in a namespace.
+                 *
+                 * Note: the exception to this is PHP 5.3.0-5.3.2. This is currently
+                 * not dealt with.
+                 */
+                return;
+            }
+
             $functionType = 'A PHP 4-style constructor';
         }
 
@@ -112,7 +124,7 @@ final class ConstructorDestructorReturnSniff implements Sniff
          * OK, so now we know for sure that this is a constructor/destructor method.
          */
 
-         // Check for a return type.
+        // Check for a return type.
         $tokens     = $phpcsFile->getTokens();
         $properties = FunctionDeclarations::getProperties($phpcsFile, $stackPtr);
         if ($properties['return_type'] !== '' && $properties['return_type_token'] !== false) {
@@ -154,7 +166,7 @@ final class ConstructorDestructorReturnSniff implements Sniff
         $current = $tokens[$stackPtr]['scope_opener'];
         $end     = $tokens[$stackPtr]['scope_closer'];
 
-        // Not searching for arrow functions as those have an implicit return, so no
+        // Not searching for arrow functions as those have an implicit return, so won't use the `return` keyword.
         $search            = Collections::functionDeclarationTokens();
         $search[\T_RETURN] = \T_RETURN;
 

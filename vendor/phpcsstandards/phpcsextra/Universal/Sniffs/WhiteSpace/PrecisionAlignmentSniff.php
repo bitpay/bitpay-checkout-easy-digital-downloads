@@ -10,8 +10,8 @@
 
 namespace PHPCSExtra\Universal\Sniffs\WhiteSpace;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 use PHPCSUtils\BackCompat\Helper;
 use PHPCSUtils\Tokens\Collections;
@@ -33,6 +33,7 @@ use PHPCSUtils\Tokens\Collections;
  *   `Generic.WhiteSpace.DisallowSpaceIndent` sniff to clean up the results if so desired.
  *
  * @since 1.0.0
+ * @since 1.4.0 Support for scanning JS and CSS files is deprecated and will be removed in the next major.
  */
 final class PrecisionAlignmentSniff implements Sniff
 {
@@ -42,7 +43,7 @@ final class PrecisionAlignmentSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @var array
+     * @var string[]
      */
     public $supportedTokenizers = [
         'PHP',
@@ -84,7 +85,7 @@ final class PrecisionAlignmentSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @var array
+     * @var string[]
      */
     public $ignoreAlignmentBefore = [];
 
@@ -134,7 +135,7 @@ final class PrecisionAlignmentSniff implements Sniff
      *
      * @since 1.0.0
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {
@@ -208,7 +209,11 @@ final class PrecisionAlignmentSniff implements Sniff
                 $origContent = $tokens[$i]['orig_content'];
             }
 
-            $spaces = 0;
+            $spaces  = 0;
+            $length  = 0;
+            $content = '';
+            $closer  = '';
+
             switch ($tokens[$i]['code']) {
                 case \T_WHITESPACE:
                     if ($this->ignoreBlankLines === true
@@ -302,16 +307,7 @@ final class PrecisionAlignmentSniff implements Sniff
 
                 case \T_END_HEREDOC:
                 case \T_END_NOWDOC:
-                    /*
-                     * PHPCS does not execute tab replacement in heredoc/nowdoc closer
-                     * tokens prior to PHPCS 3.7.2, so handle this ourselves.
-                     */
-                    $content = $tokens[$i]['content'];
-                    if (\strpos($tokens[$i]['content'], "\t") !== false) {
-                        $origContent = $content;
-                        $content     = \str_replace("\t", \str_repeat(' ', $this->tabWidth), $content);
-                    }
-
+                    $content    = $tokens[$i]['content'];
                     $closer     = \ltrim($content);
                     $whitespace = \str_replace($closer, '', $content);
                     $length     = \strlen($whitespace);

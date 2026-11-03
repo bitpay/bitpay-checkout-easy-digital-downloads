@@ -10,8 +10,8 @@
 
 namespace PHPCSExtra\Universal\Sniffs\UseStatements;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 use PHPCSUtils\Fixers\SpacesFixer;
 use PHPCSUtils\Utils\UseStatements;
@@ -19,7 +19,7 @@ use PHPCSUtils\Utils\UseStatements;
 /**
  * Enforce a single space after the keywords in import `use` statements.
  *
- * The keywords this sniff check are `use`, `function`, `const` and `as`.
+ * The keywords this sniff checks are `use`, `function`, `const` and `as`.
  * For `as`, the space *before* the keyword is also checked to be a single space.
  *
  * @since 1.1.0
@@ -50,7 +50,7 @@ final class KeywordSpacingSniff implements Sniff
      *
      * @since 1.1.0
      *
-     * @var array(string => string)
+     * @var array<string, true>
      */
     protected $keywords = [
         'const'    => true,
@@ -62,7 +62,7 @@ final class KeywordSpacingSniff implements Sniff
      *
      * @since 1.1.0
      *
-     * @return array
+     * @return array<int|string>
      */
     public function register()
     {

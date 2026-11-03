@@ -4,7 +4,7 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/HEAD/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Reports;
@@ -53,7 +53,7 @@ class Svnblame extends VersionControl
      */
     protected function getBlameContent($filename)
     {
-        $command = 'svn blame "'.$filename.'" 2>&1';
+        $command = 'svn blame '.escapeshellarg($filename).' 2>&1';
         $handle  = popen($command, 'r');
         if ($handle === false) {
             $error = 'ERROR: Could not execute "'.$command.'"'.PHP_EOL.PHP_EOL;
