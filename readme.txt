@@ -111,6 +111,7 @@ You can contact our support team via the following form https://bitpay.com/reque
 * Security: payment notifications now update only the order linked to the BitPay invoice
 * Fixed order completion check to use the correct BitPay invoice status
 * Refund notifications now require a paid invoice
+* Updated bundled dependencies (Guzzle 7.16), still compatible with PHP 8.0
 
 = 2.0.0 =
 * Rewrote plugin to use PHP 8.0 and EDD 3.1
