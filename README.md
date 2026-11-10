@@ -1,13 +1,14 @@
+> [!WARNING]
+> **This repository is archived and no longer maintained by BitPay.**
+>
+> It is read-only and will not receive updates, bug fixes, or security fixes. Please do not start new integrations from this code.
+>
+> For currently supported integrations, see [eCommerce Plugins](https://developer.bitpay.com/docs/plugins) and [Libraries](https://developer.bitpay.com/docs/libraries). If you already use this code, we recommend moving to a supported integration.
+
 <img src="https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg" width="150">
 
 # BitPay Checkout for Easy Digital Downloads
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/bitpay/bitpay-checkout-easy-digital-downloads/master/LICENSE)
-
-# Notice
-
-This is a Community-supported project.
-
-If you are interested in becoming a maintainer of this project, please contact us at integrations@bitpay.com. Developers at BitPay will attempt to work along the new maintainers to ensure the project remains viable for the foreseeable future.
 
 # Description
 
